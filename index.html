@@ -26,7 +26,26 @@
             margin-bottom: 20px;
         }
 
-        #productList div {
+        #suggestions {
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: white;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+}
+
+#suggestions div {
+    padding: 8px;
+    cursor: pointer;
+    color: #333;
+}
+
+#suggestions div:hover {
+    background-color: #f0f0f0;
+}
+#productList div {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -37,6 +56,7 @@
             flex-grow: 1;
             margin-right: 10px;
         }
+        
 
         #suggestions {
             border: 1px solid #ccc;
@@ -137,6 +157,8 @@
 
     <h1>Sales Listing</h1>
     <input type="text" id="searchBar" placeholder="Search for items..." onkeyup="searchItems()">
+<div id="suggestions"></div>
+
 
     <h3>Payment</h3>
     <div>
@@ -144,6 +166,7 @@
         <label><input type="radio" name="store" value="*Card*" onclick="toggleItems()"> Card</label>
         <label><input type="radio" name="store" value="*E-Wallet*" onclick="toggleItems()"> E-wallet</label>
     </div>
+    
 
     <h3>Category</h3>
     <div class="category-container" id="categoryContainer"></div>
@@ -480,6 +503,33 @@ function saveItem(id, name, price) {
                 localStorage.setItem('dark-mode', 'disabled');
             }
         }
+        function searchItems() {
+    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+    const allProducts = Object.values(categories).flat();
+    const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
+    
+    // 清空建议列表
+    const suggestionsDiv = document.getElementById('suggestions');
+    suggestionsDiv.innerHTML = '';
+    
+    // 如果搜索栏为空，不显示建议
+    if (searchTerm === '') {
+        return;
+    }
+
+    // 显示建议列表
+    filteredProducts.forEach(product => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.textContent = product.name;
+        suggestionItem.onclick = function() {
+            document.getElementById('searchBar').value = product.name;
+            suggestionsDiv.innerHTML = '';  // 清空建议列表
+            loadProducts([product]);  // 显示选中的产品信息
+        };
+        suggestionsDiv.appendChild(suggestionItem);
+    });
+}
+
 
         function clearAllStorage() {
             selectedItems = {};
