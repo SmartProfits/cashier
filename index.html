@@ -116,17 +116,19 @@
             justify-content: space-between;
             margin-top: 5px;
         }
+        
 
-        button {
-            padding: 15px 5px;
-            font-size: 1.1rem;
-            margin: 1px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 40%;
-            border: none;
-            border-radius: 81px;
-        }
+       button {
+    padding: 5px 10px;
+    font-size: 1rem;
+    margin: 0 5px;
+    cursor: pointer;
+}
+
+span {
+    font-size: 1.2rem;
+}
+
 
         .toggle-mode-btn {
             background-color: #007bff;
@@ -365,20 +367,42 @@
         }
     };
 
-    function loadProducts(products) {
-        const productList = document.getElementById('productList');
-        productList.innerHTML = '';
+function loadProducts(products) {
+    const productList = document.getElementById('productList');
+    productList.innerHTML = '';
 
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
-                <label for="item${product.id}">${product.name} - $${product.price.toFixed(2)}</label>
-                <input type="number" id="quantity${product.id}" min="1" placeholder="数量" onchange="saveQuantity(${product.id})">
-            `;
-            productList.appendChild(div);
-        });
+    products.forEach(product => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
+            <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
+            <div style="display: flex; align-items: center;">
+                <button onclick="decreaseQuantity(${product.id})">-</button>
+                <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
+                <button onclick="increaseQuantity(${product.id})">+</button>
+            </div>
+        `;
+        productList.appendChild(div);
+    });
+}
+function increaseQuantity(id) {
+    const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+    let currentQuantity = parseInt(quantityDisplay.textContent);
+    currentQuantity++;
+    quantityDisplay.textContent = currentQuantity;
+    saveQuantity(id, currentQuantity);  // 更新选中的商品数量
+}
+
+function decreaseQuantity(id) {
+    const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+    let currentQuantity = parseInt(quantityDisplay.textContent);
+    if (currentQuantity > 1) {  // 确保数量不小于 1
+        currentQuantity--;
+        quantityDisplay.textContent = currentQuantity;
+        saveQuantity(id, currentQuantity);  // 更新选中的商品数量
     }
+}
+
 
     function searchItems() {
         const searchTerm = document.getElementById('searchBar').value.toLowerCase();
@@ -398,12 +422,12 @@ function saveItem(id, name, price) {
             }
         }
 
-        function saveQuantity(id) {
-            const quantity = document.getElementById('quantity' + id).value || 1;
-            if (selectedItems[id]) {
-                selectedItems[id].quantity = quantity;
-            }
-        }
+       function saveQuantity(id, quantity) {
+    if (selectedItems[id]) {
+        selectedItems[id].quantity = quantity;
+    }
+}
+
 
         function toggleItems() {
             let selectedStore = document.querySelector('input[name="store"]:checked');
@@ -546,6 +570,17 @@ function saveItem(id, name, price) {
             }
             alert('所有内容已清空');
         }
+        function saveItem(id, name, price) {
+    const checkbox = document.getElementById('item' + id);
+    const quantity = document.getElementById('quantityDisplay' + id).textContent || 1;
+
+    if (checkbox.checked) {
+        selectedItems[id] = { quantity: quantity, price: price };
+    } else {
+        delete selectedItems[id];
+    }
+}
+
         
     </script>
 </body>
