@@ -9,8 +9,8 @@
             font-family: Arial, sans-serif;
             padding: 15px;
             margin: 0;
-            background-color: #FBFCFC;
-            color: #333;
+            background-color: #1c1c1c;
+            color: #e0e0e0;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -73,13 +73,14 @@
 
         #result {
             width: 100%;
-            height: 150px;
+            height: 250px;
             border: 1px solid #ccc;
             padding: 10px;
             margin-top: 10px;
             white-space: pre-wrap;
             overflow: auto;
             font-size: 1.1rem;
+            color: black 
             background-color: #fff;
             border-radius: 8px;
         }
@@ -93,17 +94,18 @@
         .action-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         button {
-            padding: 12px 18px;
+            padding: 15px 5px;
             font-size: 1.1rem;
-            margin: 5px;
+            margin: 1x;
             cursor: pointer;
-            width: 48%;
+            margin-top: 10px;
+            width: 40%;
             border: none;
-            border-radius: 8px;
+            border-radius: 81px;
         }
 
         .toggle-mode-btn {
@@ -118,7 +120,7 @@
         }
 
         .saved-button {
-            background-color: #add8e6; /* 浅蓝色 */
+            background-color: #007bff; /* 浅蓝色 */
         }
     </style>
 </head>
@@ -147,23 +149,15 @@
 
     <div class="button-container">
         <button onclick="saveToStorage(1)">Save 1</button>
-        <button onclick="viewStorage(1)">View 1</button>
-    </div>
-    <div class="button-container">
         <button onclick="saveToStorage(2)">Save 2</button>
-        <button onclick="viewStorage(2)">View 2</button>
-    </div>
-    <div class="button-container">
         <button onclick="saveToStorage(3)">Save 3</button>
-        <button onclick="viewStorage(3)">View 3</button>
-    </div>
-    <div class="button-container">
         <button onclick="saveToStorage(4)">Save 4</button>
-        <button onclick="viewStorage(4)">View 4</button>
     </div>
     <div class="button-container">
-        <button onclick="saveToStorage(5)">Save 5</button>
-        <button onclick="viewStorage(5)">View 5</button>
+        <button onclick="viewStorage(1)">View 1</button>
+        <button onclick="viewStorage(2)">View 2</button>
+        <button onclick="viewStorage(3)">View 3</button>
+        <button onclick="viewStorage(4)">View 4</button>
     </div>
     <button onclick="clearAllStorage()">Clear All</button>
 
@@ -245,17 +239,17 @@
             { id: 126, name: "HT Dried Fruit Mango ", price: 0 }
         ],
         Chocolate: [
-            { id: 108, name: "AD Chocolate Durian", unit: 'pc', price: 0 },
-            { id: 109, name: "AD Chocolate Sabah Tea", unit: 'pc', price: 0 },
-            { id: 110, name: "AD Chocolate Mango", unit: 'pc', price: 0 },
-            { id: 111, name: "AD Chocolate Chili", unit: 'pc', price: 0 },
-            { id: 112, name: "AD Chocolate Dark", unit: 'pc', price: 0 },
-            { id: 113, name: "AD Chocolate Coffee", unit: 'pc', price: 0 },
-            { id: 114, name: "AD Chocolate Banana", unit: 'pc', price: 0 },
-            { id: 115, name: "AD Chocolate Tiramisu", unit: 'pc', price: 0 },
-            { id: 116, name: "AD Chocolate Mint", unit: 'pc', price: 0 },
-            { id: 117, name: "AD Chocolate Rambutan", unit: 'pc', price: 0 },
-            { id: 118, name: "AD Chocolate Soursup", unit: 'pc', price: 0 }
+            { id: 108, name: "AD Chocolate Durian", unit: 'pc', price: 39 },
+            { id: 109, name: "AD Chocolate Sabah Tea", unit: 'pc', price: 39 },
+            { id: 110, name: "AD Chocolate Mango", unit: 'pc', price: 39 },
+            { id: 111, name: "AD Chocolate Chili", unit: 'pc', price: 39 },
+            { id: 112, name: "AD Chocolate Dark", unit: 'pc', price: 39 },
+            { id: 113, name: "AD Chocolate Coffee", unit: 'pc', price: 39 },
+            { id: 114, name: "AD Chocolate Banana", unit: 'pc', price: 39 },
+            { id: 115, name: "AD Chocolate Tiramisu", unit: 'pc', price: 39 },
+            { id: 116, name: "AD Chocolate Mint", unit: 'pc', price: 39 },
+            { id: 117, name: "AD Chocolate Rambutan", unit: 'pc', price: 39 },
+            { id: 118, name: "AD Chocolate Soursup", unit: 'pc', price: 39 }
         ],
         Sotong: [
             { id: 85, name: "Cuttlefish Red", price: 0 },
@@ -409,12 +403,12 @@
             for (const [id, { quantity, price }] of Object.entries(selectedItems)) {
                 const product = Object.values(categories).flat().find(p => p.id == id);
                 if (product) {
-                    result += `${product.name} - ${quantity} 件, $${(quantity * price).toFixed(2)}\n`;
+                    result += `${product.name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
                 }
             }
 
             result += `\nTotal: RM${calculateTotal()}\n`;
-            result += '\nCashier Tools: smartprofits.github.io/order/';
+            result += '\nCashier Tools: If you have any questions or need to add new products, please contact me (Mark).';
             document.getElementById('result').innerText = result;
             return result;
         }
