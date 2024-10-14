@@ -158,7 +158,8 @@ span {
 <body>
 
     <h1>Sales Listing</h1>
-    <input type="text" id="searchBar" placeholder="Search for items..." onkeyup="searchItems()">
+    <input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''" onkeyup="searchItems()">
+
 <div id="suggestions"></div>
 
 
