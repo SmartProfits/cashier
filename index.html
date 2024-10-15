@@ -165,9 +165,9 @@ span {
 
     <h3>Payment</h3>
     <div>
-        <label><input type="radio" name="store" value="*Cash*" onclick="toggleItems()"> Cash</label>
-        <label><input type="radio" name="store" value="*Card*" onclick="toggleItems()"> Card</label>
-        <label><input type="radio" name="store" value="*E-Wallet*" onclick="toggleItems()"> E-wallet</label>
+        <label><input type="radio" name="store" value="*Cash*" onclick="updateResult()"> Cash</label>
+        <label><input type="radio" name="store" value="*Card*" onclick="updateResult()"> Card</label>
+        <label><input type="radio" name="store" value="*E-Wallet*" onclick="updateResult()"> E-wallet</label>
     </div>
     
 
@@ -176,9 +176,7 @@ span {
 
     <h3>Item (default is 1）</h3>
     <div id="productList"></div>
-
-    <div class="action-buttons">
-        <button onclick="generateText()">Generate</button>
+     <div class="action-buttons">
         <button onclick="clearAll()">Next Customers</button>
     </div>
 
@@ -355,7 +353,6 @@ span {
         ]
     };
 
-
     let selectedItems = {};
 
     window.onload = function() {
@@ -392,6 +389,7 @@ function increaseQuantity(id) {
     currentQuantity++;
     quantityDisplay.textContent = currentQuantity;
     saveQuantity(id, currentQuantity);  // 更新选中的商品数量
+    updateResult();
 }
 
 function decreaseQuantity(id) {
@@ -401,134 +399,11 @@ function decreaseQuantity(id) {
         currentQuantity--;
         quantityDisplay.textContent = currentQuantity;
         saveQuantity(id, currentQuantity);  // 更新选中的商品数量
+        updateResult();
     }
 }
 
-
-    function searchItems() {
-        const searchTerm = document.getElementById('searchBar').value.toLowerCase();
-        const allProducts = Object.values(categories).flat();
-        const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
-        loadProducts(filteredProducts);
-    }
-
-function saveItem(id, name, price) {
-            const checkbox = document.getElementById('item' + id);
-            const quantity = document.getElementById('quantity' + id).value || 1;
-
-            if (checkbox.checked) {
-                selectedItems[id] = { quantity: quantity, price: price };
-            } else {
-                delete selectedItems[id];
-            }
-        }
-
-       function saveQuantity(id, quantity) {
-    if (selectedItems[id]) {
-        selectedItems[id].quantity = quantity;
-    }
-}
-
-
-        function toggleItems() {
-            let selectedStore = document.querySelector('input[name="store"]:checked');
-            let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
-            let quantities = document.querySelectorAll('#productList input[type="number"]');
-
-            if (selectedStore) {
-                checkboxes.forEach(checkbox => checkbox.disabled = false);
-                quantities.forEach(quantity => quantity.disabled = false);
-            }
-        }
-
-        function showCategory() {
-            let selectedCategory = document.querySelector('input[name="category"]:checked');
-            
-            if (selectedCategory) {
-                let categoryValue = selectedCategory.value;
-                let productsToShow = categories[categoryValue];
-                
-                if (productsToShow) {
-                    loadProducts(productsToShow);
-                } else {
-                    console.error("没有找到该分类的商品");
-                }
-            } else {
-                console.error("没有选中任何分类");
-            }
-
-            toggleItems();
-        }
-
-        function calculateTotal() {
-            let total = 0;
-            for (const item of Object.values(selectedItems)) {
-                total += item.quantity * item.price;
-            }
-            return total.toFixed(2);
-        }
-
-        function generateText() {
-            let result = '';
-            let selectedStore = document.querySelector('input[name="store"]:checked');
-            if (selectedStore) {
-                result += 'Payment: ' + selectedStore.value + '\n\n';
-            } else {
-                result += 'Payment: No Select\n';
-            }
-
-            for (const [id, { quantity, price }] of Object.entries(selectedItems)) {
-                const product = Object.values(categories).flat().find(p => p.id == id);
-                if (product) {
-                    result += `${product.name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
-                }
-            }
-
-            result += `\nTotal: RM${calculateTotal()}\n`;
-            result += '\nCashier Tools: If you have any questions or need to add new products, please contact me (Mark).';
-            document.getElementById('result').innerText = result;
-            return result;
-        }
-
-        function saveToStorage(position) {
-            const text = generateText();
-            localStorage.setItem('salesItemPosition' + position, text);
-            alert('Data Saved ' + position);
-            const saveButton = document.querySelector(`button[onclick="saveToStorage(${position})"]`);
-            saveButton.classList.add('saved-button');
-        }
-
-        function viewStorage(position) {
-            const storedText = localStorage.getItem('salesItemPosition' + position);
-            if (storedText) {
-                alert('Save ' + position + ' Data:\n' + storedText);
-            } else {
-                alert('Save ' + position + ' No Data');
-            }
-        }
-
-        function clearAll() {
-            selectedItems = {};
-            document.getElementById('productList').innerHTML = '';
-            document.getElementById('result').innerText = '';
-            document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
-            document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
-            toggleItems();
-        }
-
-        function toggleDarkMode() {
-            const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
-            const toggleButton = document.querySelector('.toggle-mode-btn');
-
-            if (isDarkModeEnabled) {
-                toggleButton.textContent = '切换至正常模式';
-                localStorage.setItem('dark-mode', 'enabled');
-            } else {
-                toggleButton.textContent = '切换至黑暗模式';
-                localStorage.setItem('dark-mode', 'disabled');
-            }
-        }
-        function searchItems() {
+function searchItems() {
     const searchTerm = document.getElementById('searchBar').value.toLowerCase();
     const allProducts = Object.values(categories).flat();
     const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
@@ -555,23 +430,7 @@ function saveItem(id, name, price) {
     });
 }
 
-
-        function clearAllStorage() {
-            selectedItems = {};
-            document.getElementById('productList').innerHTML = '';
-            document.getElementById('result').innerText = '';
-            document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
-            document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
-            toggleItems();
-            // 清除本地存储内容并复原按钮颜色
-            for (let i = 1; i <= 5; i++) {
-                localStorage.removeItem('salesItemPosition' + i);
-                const saveButton = document.querySelector(`button[onclick="saveToStorage(${i})"]`);
-                saveButton.classList.remove('saved-button');
-            }
-            alert('所有内容已清空');
-        }
-        function saveItem(id, name, price) {
+function saveItem(id, name, price) {
     const checkbox = document.getElementById('item' + id);
     const quantity = document.getElementById('quantityDisplay' + id).textContent || 1;
 
@@ -580,9 +439,129 @@ function saveItem(id, name, price) {
     } else {
         delete selectedItems[id];
     }
+    updateResult();
 }
 
+function saveQuantity(id, quantity) {
+    if (selectedItems[id]) {
+        selectedItems[id].quantity = quantity;
+    }
+}
+
+function toggleItems() {
+    let selectedStore = document.querySelector('input[name="store"]:checked');
+    let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
+    let quantities = document.querySelectorAll('#productList input[type="number"]');
+
+    if (selectedStore) {
+        checkboxes.forEach(checkbox => checkbox.disabled = false);
+        quantities.forEach(quantity => quantity.disabled = false);
+    }
+}
+
+function showCategory() {
+    let selectedCategory = document.querySelector('input[name="category"]:checked');
+    
+    if (selectedCategory) {
+        let categoryValue = selectedCategory.value;
+        let productsToShow = categories[categoryValue];
         
-    </script>
+        if (productsToShow) {
+            loadProducts(productsToShow);
+        } else {
+            console.error("没有找到该分类的商品");
+        }
+    } else {
+        console.error("没有选中任何分类");
+    }
+
+    toggleItems();
+}
+
+function calculateTotal() {
+    let total = 0;
+    for (const item of Object.values(selectedItems)) {
+        total += item.quantity * item.price;
+    }
+    return total.toFixed(2);
+}
+
+function updateResult() {
+    let result = '';
+    let selectedStore = document.querySelector('input[name="store"]:checked');
+    if (selectedStore) {
+        result += 'Payment: ' + selectedStore.value + '\n\n';
+    } else {
+        result += 'Payment: No Select\n';
+    }
+
+    for (const [id, { quantity, price }] of Object.entries(selectedItems)) {
+        const product = Object.values(categories).flat().find(p => p.id == id);
+        if (product) {
+            result += `${product.name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
+        }
+    }
+
+    result += `\nTotal: RM${calculateTotal()}\n`;
+    result += '\nCashier Tools: If you have any questions or need to add new products, please contact me (Mark).';
+    document.getElementById('result').innerText = result;
+}
+
+function saveToStorage(position) {
+    const text = document.getElementById('result').innerText;
+    localStorage.setItem('salesItemPosition' + position, text);
+    alert('Data Saved ' + position);
+    const saveButton = document.querySelector(`button[onclick="saveToStorage(${position})"]`);
+    saveButton.classList.add('saved-button');
+}
+
+function viewStorage(position) {
+    const storedText = localStorage.getItem('salesItemPosition' + position);
+    if (storedText) {
+        alert('Save ' + position + ' Data:\n' + storedText);
+    } else {
+        alert('Save ' + position + ' No Data');
+    }
+}
+
+function clearAll() {
+    selectedItems = {};
+    document.getElementById('productList').innerHTML = '';
+    document.getElementById('result').innerText = '';
+    document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
+    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+    toggleItems();
+}
+
+function toggleDarkMode() {
+    const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
+    const toggleButton = document.querySelector('.toggle-mode-btn');
+
+    if (isDarkModeEnabled) {
+        toggleButton.textContent = '切换至正常模式';
+        localStorage.setItem('dark-mode', 'enabled');
+    } else {
+        toggleButton.textContent = '切换至黑暗模式';
+        localStorage.setItem('dark-mode', 'disabled');
+    }
+}
+
+function clearAllStorage() {
+    selectedItems = {};
+    document.getElementById('productList').innerHTML = '';
+    document.getElementById('result').innerText = '';
+    document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
+    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+    toggleItems();
+    // 清除本地存储内容并复原按钮颜色
+    for (let i = 1; i <= 5; i++) {
+        localStorage.removeItem('salesItemPosition' + i);
+        const saveButton = document.querySelector(`button[onclick="saveToStorage(${i})"]`);
+        saveButton.classList.remove('saved-button');
+    }
+    alert('所有内容已清空');
+}
+
+</script>
 </body>
 </html>
