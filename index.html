@@ -465,6 +465,14 @@ span {
     let selectedItems = {};
 
     window.onload = function() {
+        // 提示用户输入 Supervisor 和 Cashier 名字
+        supervisorName = prompt('Please enter the Supervisor name:', 'Supervisor');
+        cashierName = prompt('Please enter the Cashier name:', 'Cashier');
+
+        // 如果用户未填写，使用默认值
+        if (!supervisorName) supervisorName = 'Supervisor';
+        if (!cashierName) cashierName = 'Cashier';
+
         // 初始化分类选择
         const categoryContainer = document.getElementById('categoryContainer');
         for (let category in categories) {
@@ -627,6 +635,11 @@ function calculateTotal() {
 
 function updateResult() {
     let result = '';
+
+    // 显示 Supervisor 和 Cashier 的名字
+    result += `Supervisor: ${supervisorName}\n`;
+    result += `Cashier: ${cashierName}\n\n`;
+
     let selectedStore = document.querySelector('input[name="store"]:checked');
     if (selectedStore) {
         result += 'Payment: ' + selectedStore.value + '\n\n';
