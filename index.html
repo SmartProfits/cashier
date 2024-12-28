@@ -162,14 +162,14 @@ span {
         }
 
         .payment-options {
-            display: flex;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             margin-top: 10px;
         }
 
         .payment-option {
-            flex: 1;
-            padding: 15px;
+            padding: 15px 10px;
             border-radius: 8px;
             background-color: #3c3c3c;
             cursor: pointer;
@@ -178,7 +178,19 @@ span {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            min-height: 60px;
+        }
+
+        .payment-option span {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .payment-option span i {
+            font-size: 1.5rem;
         }
 
         .payment-option:hover {
@@ -186,13 +198,25 @@ span {
             transform: translateY(-2px);
         }
 
-        .payment-option input[type="radio"] {
-            margin: 0;
-        }
-
         .payment-option.selected {
             background-color: #007bff;
             color: white;
+        }
+
+        /* 添加响应式设计 */
+        @media screen and (max-width: 600px) {
+            .payment-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .payment-option {
+                padding: 10px 5px;
+                min-height: 50px;
+            }
+
+            .payment-option span {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -217,15 +241,24 @@ span {
         <div class="payment-options">
             <label class="payment-option">
                 <input type="radio" name="store" value="*Cash*" onclick="toggleCashInput(); updateResult(); selectPayment(this)">
-                <span>💵 Cash</span>
+                <span>
+                    💵<br>
+                    Cash
+                </span>
             </label>
             <label class="payment-option">
                 <input type="radio" name="store" value="*Card*" onclick="hideCashInput(); updateResult(); selectPayment(this)">
-                <span>💳 Card</span>
+                <span>
+                    💳<br>
+                    Card
+                </span>
             </label>
             <label class="payment-option">
                 <input type="radio" name="store" value="*E-Wallet*" onclick="hideCashInput(); updateResult(); selectPayment(this)">
-                <span>📱 E-wallet</span>
+                <span>
+                    📱<br>
+                    E-wallet
+                </span>
             </label>
         </div>
     </div>
