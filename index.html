@@ -634,11 +634,9 @@ function updateResult() {
         result += 'Payment: No Select\n';
     }
 
-    for (const [id, { quantity, price }] of Object.entries(selectedItems)) {
-        const product = Object.values(categories).flat().find(p => p.id == id);
-        if (product) {
-            result += `${product.name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
-        }
+    // 显示所有商品记录
+    for (const [uniqueId, { name, quantity, price }] of Object.entries(selectedItems)) {
+        result += `${name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
     }
 
     result += `\nTotal: RM${calculateTotal()}\n`;
@@ -748,7 +746,7 @@ function selectPayment(radio) {
         option.classList.remove('selected');
     });
     
-    // 为选中的支付选项添加样式
+    // 为选中的��付选项添加样式
     if (radio.checked) {
         radio.closest('.payment-option').classList.add('selected');
     }
@@ -790,12 +788,12 @@ function addCustomItem(id, name) {
         return;
     }
 
-    if (selectedItems[id]) {
-        alert(`${name} is already added`);
-        return;
-    }
+    // 生成唯一的 ID，避免重复
+    const uniqueId = `${id}-${Date.now()}`;
 
-    selectedItems[id] = { quantity: 1, price: price }; // 默认数量为1
+    // 添加到 selectedItems，确保每次都是新���记录
+    selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
+
     updateResult();
     alert(`${name} added successfully!`);
 }
