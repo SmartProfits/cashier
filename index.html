@@ -442,7 +442,10 @@ span {
             { id: 120, name: "Anchovy Blue", price: 28.80 },
             { id: 121, name: "Anchovy Green", price: 28.80 },
             { id: 122, name: "Anchovy Red", price: 19.80 },
-            { id: 123, name: "Anchovy Yellow", price: 19.80 }
+            { id: 123, name: "Anchovy Yellow", price: 19.80 },
+            { id: 145, name: "Bird Nest", price: 0, customPrice: true },
+            { id: 146, name: "Fish Maw", price: 0, customPrice: true },
+            { id: 147, name: "Sea Cucumber", price: 0, customPrice: true }
         ]
     };
 
@@ -464,15 +467,48 @@ function loadProducts(products) {
 
     products.forEach(product => {
         const div = document.createElement('div');
-        div.innerHTML = `
-            <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
-            <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
-            <div style="display: flex; align-items: center;">
-                <button onclick="decreaseQuantity(${product.id})">-</button>
-                <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
-                <button onclick="increaseQuantity(${product.id})">+</button>
-            </div>
-        `;
+        if (product.customPrice) {
+            if (["Bird Nest", "Fish Maw", "Sea Cucumber"].includes(product.name)) {
+                // 为 Bird Nest、Fish Maw 和 Sea Cucumber 添加 Add 按钮
+                div.innerHTML = `
+                    <label>${product.name}</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" 
+                               id="price${product.id}" 
+                               placeholder="Enter price" 
+                               style="width: 100px; padding: 5px; background-color: white; color: black;"
+                               step="0.10">
+                        <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <input type="checkbox" id="item${product.id}" onchange="saveCustomItem(${product.id}, '${product.name}')">
+                    <label for="item${product.id}">${product.name}</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" 
+                               id="price${product.id}" 
+                               placeholder="Enter price" 
+                               style="width: 100px; padding: 5px; background-color: white; color: black;"
+                               onchange="updateCustomPrice(${product.id})"
+                               step="0.10">
+                        <button onclick="decreaseQuantity(${product.id})">-</button>
+                        <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
+                        <button onclick="increaseQuantity(${product.id})">+</button>
+                    </div>
+                `;
+            }
+        } else {
+            div.innerHTML = `
+                <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
+                <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
+                <div style="display: flex; align-items: center;">
+                    <button onclick="decreaseQuantity(${product.id})">-</button>
+                    <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
+                    <button onclick="increaseQuantity(${product.id})">+</button>
+                </div>
+            `;
+        }
         productList.appendChild(div);
     });
 }
@@ -703,6 +739,52 @@ function selectPayment(radio) {
     if (radio.checked) {
         radio.closest('.payment-option').classList.add('selected');
     }
+}
+
+function saveCustomItem(id, name) {
+    const checkbox = document.getElementById('item' + id);
+    const priceInput = document.getElementById('price' + id);
+    const quantity = document.getElementById('quantityDisplay' + id).textContent || 1;
+    const price = parseFloat(priceInput.value) || 0;
+
+    if (checkbox.checked) {
+        if (price <= 0) {
+            alert('Please enter a valid price');
+            checkbox.checked = false;
+            return;
+        }
+        selectedItems[id] = { quantity: quantity, price: price };
+    } else {
+        delete selectedItems[id];
+    }
+    updateResult();
+}
+
+function updateCustomPrice(id) {
+    const checkbox = document.getElementById('item' + id);
+    if (checkbox.checked) {
+        saveCustomItem(id, '');
+    }
+}
+
+// 添加专门处理 Add 按钮点击事件的函数
+function addCustomItem(id, name) {
+    const priceInput = document.getElementById('price' + id);
+    const price = parseFloat(priceInput.value) || 0;
+
+    if (price <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
+
+    if (selectedItems[id]) {
+        alert(`${name} is already added`);
+        return;
+    }
+
+    selectedItems[id] = { quantity: 1, price: price }; // 默认数量为1
+    updateResult();
+    alert(`${name} added successfully!`);
 }
 
 </script>
