@@ -157,27 +157,45 @@ span {
 </head>
 <body>
 
-    <h1>Sales Listing</h1>
-    <input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''" onkeyup="searchItems()">
-
-<div id="suggestions"></div>
-
-
-    <h3>Payment</h3>
-    <div>
-        <label><input type="radio" name="store" value="*Cash*" onclick="updateResult()"> Cash</label>
-        <label><input type="radio" name="store" value="*Card*" onclick="updateResult()"> Card</label>
-        <label><input type="radio" name="store" value="*E-Wallet*" onclick="updateResult()"> E-wallet</label>
+    <div class="header">
+        <h1>Sales Listing</h1>
     </div>
-    
+
+    <div class="search-container">
+        <input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''" onkeyup="searchItems()">
+        <div id="suggestions"></div>
+    </div>
+
 
     <h3>Category</h3>
     <div class="category-container" id="categoryContainer"></div>
 
-    <h3>Item (default is 1）</h3>
+    <div class="payment-section">
+        <h3>Payment Method</h3>
+        <div class="payment-options">
+            <label class="payment-option">
+                <input type="radio" name="store" value="*Cash*" onclick="toggleCashInput(); updateResult()">
+                💵 Cash
+            </label>
+            <label class="payment-option">
+                <input type="radio" name="store" value="*Card*" onclick="hideCashInput(); updateResult()">
+                💳 Card
+            </label>
+            <label class="payment-option">
+                <input type="radio" name="store" value="*E-Wallet*" onclick="hideCashInput(); updateResult()">
+                📱 E-wallet
+            </label>
+        </div>
+    </div>
     <div id="productList"></div>
-     <div class="action-buttons">
+    <div class="action-buttons">
         <button onclick="clearAll()">Next Customers</button>
+        <div id="cashInputContainer" style="display: none;">
+            <input type="number" id="cashAmount" placeholder="Enter cash amount" 
+                   style="background-color: white; color: black; padding: 5px;"
+                   oninput="calculateChange()">
+            <div id="changeAmount" style="color: #e0e0e0; margin-left: 10px; display: inline-block;"></div>
+        </div>
     </div>
 
     <div id="result"></div>
@@ -460,7 +478,15 @@ function toggleItems() {
 }
 
 function showCategory() {
+    let selectedStore = document.querySelector('input[name="store"]:checked');
     let selectedCategory = document.querySelector('input[name="category"]:checked');
+    
+    // 如果已经选择了支付方式，清空商品列表
+    if (selectedStore) {
+        document.getElementById('productList').innerHTML = '';
+        document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+        return;
+    }
     
     if (selectedCategory) {
         let categoryValue = selectedCategory.value;
@@ -503,7 +529,22 @@ function updateResult() {
     }
 
     result += `\nTotal: RM${calculateTotal()}\n`;
-    result += '\nCashier Tools: If you have any questions or need to add new products, please contact me (Mark).';
+
+    // 添加现金和找零信息
+    if (selectedStore && selectedStore.value === '*Cash*') {
+        const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+        result += `Cash: RM${cashAmount.toFixed(2)}\n`;
+        
+        const total = parseFloat(calculateTotal());
+        const change = cashAmount - total;
+        
+        if (!isNaN(change) && change >= 0) {
+            result += `Change: RM${change.toFixed(2)}`;
+        } else if (!isNaN(change) && change < 0) {
+            result += `Insufficient amount`;
+        }
+    }
+
     document.getElementById('result').innerText = result;
 }
 
@@ -560,6 +601,36 @@ function clearAllStorage() {
         saveButton.classList.remove('saved-button');
     }
     alert('所有内容已清空');
+}
+
+function toggleCashInput() {
+    document.getElementById('cashInputContainer').style.display = 'block';
+    calculateChange();
+    document.getElementById('productList').innerHTML = '';
+    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+}
+
+function hideCashInput() {
+    document.getElementById('cashInputContainer').style.display = 'none';
+    document.getElementById('changeAmount').textContent = '';
+    document.getElementById('productList').innerHTML = '';
+    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+}
+
+function calculateChange() {
+    const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+    const total = parseFloat(calculateTotal());
+    const change = cashAmount - total;
+    
+    if (!isNaN(change) && change >= 0) {
+        document.getElementById('changeAmount').textContent = `Change: RM${change.toFixed(2)}`;
+    } else if (!isNaN(change) && change < 0) {
+        document.getElementById('changeAmount').textContent = `Insufficient amount`;
+    } else {
+        document.getElementById('changeAmount').textContent = '';
+    }
+    
+    updateResult();
 }
 
 </script>
