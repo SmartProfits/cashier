@@ -489,36 +489,18 @@ function loadProducts(products) {
     products.forEach(product => {
         const div = document.createElement('div');
         if (product.customPrice) {
-            if (["Bird Nest", "Fish Maw", "Sea Cucumber"].includes(product.name)) {
-                // 为 Bird Nest、Fish Maw 和 Sea Cucumber 添加 Add 按钮
-                div.innerHTML = `
-                    <label>${product.name}</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="number" 
-                               id="price${product.id}" 
-                               placeholder="Enter price" 
-                               style="width: 100px; padding: 5px; background-color: white; color: black;"
-                               step="0.10">
-                        <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
-                    </div>
-                `;
-            } else {
-                div.innerHTML = `
-                    <input type="checkbox" id="item${product.id}" onchange="saveCustomItem(${product.id}, '${product.name}')">
-                    <label for="item${product.id}">${product.name}</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="number" 
-                               id="price${product.id}" 
-                               placeholder="Enter price" 
-                               style="width: 100px; padding: 5px; background-color: white; color: black;"
-                               onchange="updateCustomPrice(${product.id})"
-                               step="0.10">
-                        <button onclick="decreaseQuantity(${product.id})">-</button>
-                        <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
-                        <button onclick="increaseQuantity(${product.id})">+</button>
-                    </div>
-                `;
-            }
+            div.innerHTML = `
+                <label>${product.name}</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" 
+                           id="price${product.id}" 
+                           placeholder="Enter price" 
+                           style="width: 100px; padding: 5px; background-color: white; color: black;"
+                           step="0.10">
+                    <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
+                    <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
+                </div>
+            `;
         } else {
             div.innerHTML = `
                 <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
@@ -527,12 +509,31 @@ function loadProducts(products) {
                     <button onclick="decreaseQuantity(${product.id})">-</button>
                     <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
                     <button onclick="increaseQuantity(${product.id})">+</button>
+                    <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
                 </div>
             `;
         }
         productList.appendChild(div);
     });
 }
+
+function removeItem(id) {
+    const checkbox = document.getElementById('item' + id);
+    if (checkbox) {
+        checkbox.checked = false;
+        checkbox.onchange(); // 触发保存操作，移除商品
+    } else {
+        // 如果是自定义商品，直接从 selectedItems 中删除
+        for (const uniqueId in selectedItems) {
+            if (uniqueId.startsWith(`${id}-`)) {
+                delete selectedItems[uniqueId];
+                break;
+            }
+        }
+    }
+    updateResult();
+}
+
 function increaseQuantity(id) {
     const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
     let currentQuantity = parseInt(quantityDisplay.textContent);
