@@ -803,9 +803,9 @@ function updateCustomPrice(id) {
 // 添加专门处理 Add 按钮点击事件的函数
 function addCustomItem(id, name) {
     const priceInput = document.getElementById('price' + id);
-    const price = parseFloat(priceInput.value) || 0;
+    const price = parseFloat(priceInput.value);
 
-    if (price <= 0) {
+    if (isNaN(price) || price <= 0) {
         alert('Please enter a valid price');
         return;
     }
@@ -817,7 +817,13 @@ function addCustomItem(id, name) {
     selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
 
     updateResult();
-    alert(`${name} added successfully!`);
+
+    // 在页面上显示成功信息
+    const successMessage = document.createElement('div');
+    successMessage.textContent = `${name} added successfully!`;
+    successMessage.style.color = 'green';
+    document.body.appendChild(successMessage);
+    setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
 }
 
 </script>
