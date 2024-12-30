@@ -263,16 +263,7 @@
 	<div class="header">
 		<h1>Sales Listing</h1>
 	</div>
-	<div id="storeSelection" style="margin-bottom: 20px;">
-		<label for="storeDropdown">Select Store:</label>
-		<select id="storeDropdown">
-			<option value="" disabled selected>--Select Store--</option>
-			<option value="JKL">JKL</option>
-			<option value="TOM">TOM</option>
-			<option value="Ole-Ole">Ole-Ole</option>
-		</select>
-		<button onclick="selectStore()" style="margin-top: 10px;">Confirm Store</button>
-	</div>
+	
 	<div class="search-container">
 		<input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''"
 			onkeyup="searchItems()">
@@ -517,26 +508,38 @@
 				categoryContainer.appendChild(label);
 			}
 
-			document.getElementById("storeSelection").style.display = "block";
+			// 开始时显示输入 Supervisor 和 Cashier 的弹窗
+			setTimeout(promptSupervisorAndCashier, 500);
 		};
 
-		function selectStore() {
-			const storeDropdown = document.getElementById("storeDropdown");
-			selectedStore = storeDropdown.value;
-
-			if (!selectedStore) {
-				alert("Please select a valid store.");
-				return;
-			}
-
+		function promptSupervisorAndCashier() {
+			// 输入 Supervisor 和 Cashier 名字
 			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
 			cashierName = prompt("Please enter the Cashier name:", "Cashier");
 
-			if (!supervisorName) supervisorName = "Supervisor";
-			if (!cashierName) cashierName = "Cashier";
+			if (!supervisorName || !cashierName) {
+				alert("Supervisor and Cashier names are required!");
+				return promptSupervisorAndCashier(); // 强制用户填写
+			}
 
-			document.getElementById("storeSelection").style.display = "none";
-			resetAllData();
+			// 显示店铺选择模态框
+			showStoreSelectionModal();
+		}
+
+		function showStoreSelectionModal() {
+			const modal = document.getElementById("storeModal");
+			modal.style.display = "block"; // 显示模态框
+		}
+
+		function selectStore(storeName) {
+			selectedStore = storeName;
+
+			// 隐藏模态框
+			const modal = document.getElementById("storeModal");
+			modal.style.display = "none";
+
+			alert(`Store "${storeName}" selected successfully.`);
+			resetAllData(); // 重置数据
 			updateCurrentBillDisplay();
 		}
 
@@ -546,6 +549,7 @@
 			soldItems = {};
 			selectedItems = {};
 
+			// 清空本地存储中的所有单据
 			Object.keys(localStorage).forEach((key) => {
 				if (key.startsWith("bill_")) {
 					localStorage.removeItem(key);
@@ -1227,6 +1231,15 @@
 	</script>
 	<p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
 
+	<!-- 店铺选择模态框 -->
+	<div id="storeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border-radius: 10px; padding: 20px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+		<h3 style="text-align: center;">Select Store</h3>
+		<div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;">
+			<button onclick="selectStore('JKL')" style="padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">JKL</button>
+			<button onclick="selectStore('TOM')" style="padding: 10px 20px; font-size: 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">TOM</button>
+			<button onclick="selectStore('Ole-Ole')" style="padding: 10px 20px; font-size: 16px; background-color: #ffc107; color: white; border: none; border-radius: 5px; cursor: pointer;">Ole-Ole</button>
+		</div>
+	</div>
 
 </body>
 
