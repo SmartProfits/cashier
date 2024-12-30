@@ -337,6 +337,11 @@
 		<button onclick="deleteBill()">Delete</button>
 	</div>
 
+	<div>
+		<button onclick="showSalesClosing()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Sales Closing</button>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
 	<script>
 		// 分类商品
 		const categories = {
@@ -498,32 +503,69 @@
 		};
 
 		let selectedItems = {};
-		let billNumber = 1; // 从 1 开始的单据编号
+		let billNumber = 1; // 单据编号
+		let salesSummary = {
+			cash: 0,
+			card: 0,
+			ewallet: 0,
+		}; // 保存销售统计数据
+		let soldItems = {}; // 保存售出的物品数据 { name: { quantity: x, totalPrice: y } }
+		let selectedStore = ""; // 保存选中的店铺名称
+		let supervisorName = "";
+		let cashierName = "";
 
 		window.onload = function () {
-			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
-			cashierName = prompt("Please enter the Cashier name:", "Cashier");
-
-			if (!supervisorName) supervisorName = "Supervisor";
-			if (!cashierName) cashierName = "Cashier";
-
-			// 初始化隐藏支付方式
-			togglePaymentMethod(false);
-
-			const savedBillNumber = localStorage.getItem("billNumber");
-			if (savedBillNumber) {
-				billNumber = parseInt(savedBillNumber);
-			}
-
-			updateCurrentBillDisplay();
-
+			// 初始化分类选择
 			const categoryContainer = document.getElementById("categoryContainer");
 			for (let category in categories) {
 				const label = document.createElement("label");
 				label.innerHTML = `<input type="radio" name="category" value="${category}" onclick="showCategory()">${category}`;
 				categoryContainer.appendChild(label);
 			}
+
+			// 显示店铺选择界面
+			document.getElementById("storeSelection").style.display = "block";
 		};
+
+		function selectStore() {
+			const storeDropdown = document.getElementById("storeDropdown");
+			selectedStore = storeDropdown.value;
+
+			if (!selectedStore) {
+				alert("Please select a valid store.");
+				return;
+			}
+
+			// 输入 Supervisor 和 Cashier 的名字
+			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
+			cashierName = prompt("Please enter the Cashier name:", "Cashier");
+
+			if (!supervisorName) supervisorName = "Supervisor";
+			if (!cashierName) cashierName = "Cashier";
+
+			// 隐藏店铺选择界面并重置数据
+			document.getElementById("storeSelection").style.display = "none";
+			resetAllData();
+			updateCurrentBillDisplay();
+		}
+
+		// 重置所有单据数据并重新从 001 开始
+		function resetAllData() {
+			billNumber = 1;
+			salesSummary = { cash: 0, card: 0, ewallet: 0 };
+			soldItems = {};
+			selectedItems = {};
+
+			// 清空本地存储中的所有单据
+			Object.keys(localStorage).forEach((key) => {
+				if (key.startsWith("bill_")) {
+					localStorage.removeItem(key);
+				}
+			});
+
+			localStorage.setItem("billNumber", billNumber); // 从 001 开始
+			alert(`All previous data has been reset. Starting fresh from Bill 001.`);
+		}
 
 		function loadProducts(products) {
 			const productList = document.getElementById('productList');
@@ -686,43 +728,26 @@
 		}
 
 		function updateResult() {
-			let result = "";
+			let result = `Store: ${selectedStore}\n`;
+			result += `Supervisor: ${supervisorName}\n`;
+			result += `Cashier: ${cashierName}\n\n`;
 
 			const formattedBillNumber = billNumber.toString().padStart(3, "0");
 			result += `Bill No: ${formattedBillNumber}\n`;
 
-			result += `Supervisor: ${supervisorName}\n`;
-			result += `Cashier: ${cashierName}\n\n`;
-
-			let selectedStore = document.querySelector('input[name="store"]:checked');
-			if (selectedStore) {
-				result += "Payment: " + selectedStore.value + "\n\n";
+			let selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
+			if (selectedPaymentMethod) {
+				result += "Payment: " + selectedPaymentMethod.value + "\n\n";
 			} else {
 				result += "Payment: No Select\n";
 			}
 
-			for (const [uniqueId, item] of Object.entries(selectedItems)) {
-				const name = item.name || "Unknown Item";
-				const quantity = item.quantity || 0;
-				const price = item.price || 0;
-				result += `${name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
+			for (const itemId in selectedItems) {
+				const item = selectedItems[itemId];
+				result += `${item.name} - ${item.quantity} pc, RM${(item.quantity * item.price).toFixed(2)}\n`;
 			}
 
 			result += `\nTotal: RM${calculateTotal()}\n`;
-
-			if (selectedStore && selectedStore.value === "*Cash*") {
-				const cashAmount = parseFloat(document.getElementById("cashAmount").value) || 0;
-				result += `Cash: RM${cashAmount.toFixed(2)}\n`;
-
-				const total = parseFloat(calculateTotal());
-				const change = cashAmount - total;
-
-				if (!isNaN(change) && change >= 0) {
-					result += `Change: RM${change.toFixed(2)}\n`;
-				} else if (!isNaN(change) && change < 0) {
-					result += `Insufficient amount\n`;
-				}
-			}
 
 			const currentDate = new Date();
 			const dateString = currentDate.toLocaleDateString();
@@ -757,21 +782,39 @@
 			}
 
 			// 检查支付方式
-			const selectedStore = document.querySelector('input[name="store"]:checked');
-			if (!selectedStore) {
+			const selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
+			if (!selectedPaymentMethod) {
 				alert("Please select a payment method before proceeding.");
 				return;
 			}
 
+			const total = parseFloat(calculateTotal());
+
 			// 如果选择了 Cash，需要确保输入了现金金额
-			if (selectedStore.value === "*Cash*") {
+			if (selectedPaymentMethod.value === "*Cash*") {
 				const cashAmount = parseFloat(document.getElementById("cashAmount").value);
-				const total = parseFloat(calculateTotal());
 
 				if (isNaN(cashAmount) || cashAmount < total) {
 					alert("Please enter a valid cash amount that is equal to or greater than the total amount.");
 					return;
 				}
+
+				// 更新销售统计数据
+				salesSummary.cash += total;
+			} else if (selectedPaymentMethod.value === "*Card*") {
+				salesSummary.card += total; // 更新 Card 销售数据
+			} else if (selectedPaymentMethod.value === "*E-Wallet*") {
+				salesSummary.ewallet += total; // 更新 E-Wallet 销售数据
+			}
+
+			// 更新物品统计数据
+			for (const itemId in selectedItems) {
+				const item = selectedItems[itemId];
+				if (!soldItems[item.name]) {
+					soldItems[item.name] = { quantity: 0, totalPrice: 0 };
+				}
+				soldItems[item.name].quantity += item.quantity;
+				soldItems[item.name].totalPrice += item.quantity * item.price;
 			}
 
 			// 自动保存当前单据
@@ -1067,8 +1110,134 @@
 			}
 		}
 
+		function showSalesClosing() {
+			const totalSales = salesSummary.cash + salesSummary.card + salesSummary.ewallet;
+
+			const modal = document.createElement("div");
+			modal.id = "modalContainer";
+			modal.style.position = "fixed";
+			modal.style.top = "50%";
+			modal.style.left = "50%";
+			modal.style.transform = "translate(-50%, -50%)";
+			modal.style.backgroundColor = "white";
+			modal.style.color = "black";
+			modal.style.padding = "20px";
+			modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
+			modal.style.borderRadius = "8px";
+			modal.style.zIndex = "1000";
+			modal.style.width = "90%";
+			modal.style.maxWidth = "400px";
+			modal.style.maxHeight = "80%";
+			modal.style.overflowY = "auto";
+
+			// 添加统计数据
+			const content = document.createElement("div");
+			content.style.color = "black";
+			let itemDetails = "";
+			for (const itemName in soldItems) {
+				const item = soldItems[itemName];
+				itemDetails += `<p>${itemName} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}</p>`;
+			}
+			content.innerHTML = `
+				<h3>Sales Closing</h3>
+				<p><strong>Store:</strong> ${selectedStore}</p>
+				<p><strong>Supervisor:</strong> ${supervisorName}</p>
+				<p><strong>Cashier:</strong> ${cashierName}</p>
+				<p><strong>Cash:</strong> RM${salesSummary.cash.toFixed(2)}</p>
+				<p><strong>Card:</strong> RM${salesSummary.card.toFixed(2)}</p>
+				<p><strong>E-Wallet:</strong> RM${salesSummary.ewallet.toFixed(2)}</p>
+				<p><strong>Total Sales:</strong> RM${totalSales.toFixed(2)}</p>
+				<h4>Sold Items:</h4>
+				${itemDetails}
+			`;
+			modal.appendChild(content);
+
+			// 添加生成 PDF 按钮
+			const pdfButton = document.createElement("button");
+			pdfButton.textContent = "Generate PDF";
+			pdfButton.style.marginTop = "10px";
+			pdfButton.style.backgroundColor = "#007bff";
+			pdfButton.style.color = "white";
+			pdfButton.style.padding = "10px";
+			pdfButton.style.border = "none";
+			pdfButton.style.borderRadius = "5px";
+			pdfButton.style.cursor = "pointer";
+			pdfButton.onclick = generatePDF;
+			modal.appendChild(pdfButton);
+
+			// 添加关闭按钮
+			const closeButton = document.createElement("button");
+			closeButton.textContent = "Close";
+			closeButton.style.marginTop = "10px";
+			closeButton.style.backgroundColor = "red";
+			closeButton.style.color = "white";
+			closeButton.style.padding = "10px";
+			closeButton.style.border = "none";
+			closeButton.style.borderRadius = "5px";
+			closeButton.style.cursor = "pointer";
+			closeButton.onclick = function () {
+				document.body.removeChild(modal);
+			};
+
+			modal.appendChild(closeButton);
+
+			// 添加模态框到 body
+			document.body.appendChild(modal);
+		}
+
+		async function generatePDF() {
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF();
+
+			// 标题
+			doc.setFontSize(18);
+			doc.text("Sales Closing Report", 105, 20, { align: "center" });
+			doc.setFontSize(12);
+
+			// 店铺、Supervisor 和 Cashier 信息
+			doc.text(`Store: ${selectedStore}`, 10, 40);
+			doc.text(`Supervisor: ${supervisorName}`, 10, 50);
+			doc.text(`Cashier: ${cashierName}`, 10, 60);
+
+			// 销售方式统计
+			doc.text("Sales Summary:", 10, 80);
+			doc.text(`Cash: RM${salesSummary.cash.toFixed(2)}`, 20, 90);
+			doc.text(`Card: RM${salesSummary.card.toFixed(2)}`, 20, 100);
+			doc.text(`E-Wallet: RM${salesSummary.ewallet.toFixed(2)}`, 20, 110);
+			const totalSales = salesSummary.cash + salesSummary.card + salesSummary.ewallet;
+			doc.text(`Total Sales: RM${totalSales.toFixed(2)}`, 20, 120);
+
+			// 分隔线
+			doc.setLineWidth(0.5);
+			doc.line(10, 130, 200, 130);
+
+			// 售出物品统计
+			doc.text("Sold Items:", 10, 140);
+			let y = 150; // 起始位置
+			for (const itemName in soldItems) {
+				const item = soldItems[itemName];
+				doc.text(`${itemName} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}`, 20, y);
+				y += 10;
+			}
+
+			// 保存 PDF
+			doc.save("Sales_Closing_Report.pdf");
+		}
+
 	</script>
 	<p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
+
+	<!-- Store Selection -->
+	<div id="storeSelection" style="margin-bottom: 20px;">
+		<label for="storeDropdown">Select Store:</label>
+		<select id="storeDropdown">
+			<option value="" disabled selected>--Select Store--</option>
+			<option value="JKL">JKL</option>
+			<option value="TOM">TOM</option>
+			<option value="Ole-Ole">Ole-Ole</option>
+		</select>
+		<button onclick="selectStore()" style="margin-top: 10px;">Confirm Store</button>
+	</div>
 
 </body>
 
