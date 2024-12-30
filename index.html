@@ -275,7 +275,7 @@
 
 	<div id="productList"></div>
 
-	<div class="payment-section">
+	<div class="payment-section" style="display: none;">
 		<h3>Payment Method</h3>
 		<div class="payment-options">
 			<label class="payment-option">
@@ -310,8 +310,8 @@
 	</div>
 
 	<div class="action-buttons">
-		<button onclick="clearAll()">Next Customers</button>
-		<span id="currentOrderDisplay" style="margin-left: 10px; font-weight: bold;">Current Order: 001</span>
+		<button onclick="clearAll()">Next Customer</button>
+		<span id="currentBillDisplay" style="margin-left: 10px; font-weight: bold;">Current Bill: 001</span>
 	</div>
 
 	<div id="result"></div>
@@ -331,10 +331,10 @@
 	<button onclick="clearAllStorage()">Clear All</button>
 
 	<div>
-		<h3>Search or Delete Order</h3>
-		<input type="text" id="orderSearchInput" placeholder="Enter order number (e.g., 001)">
-		<button onclick="searchOrder()">Search</button>
-		<button onclick="deleteOrder()">Delete</button>
+		<h3>Search or Delete Bill</h3>
+		<input type="text" id="billSearchInput" placeholder="Enter bill number (e.g., 001)">
+		<button onclick="searchBill(document.getElementById('billSearchInput').value)">Search</button>
+		<button onclick="deleteBill()">Delete</button>
 	</div>
 
 	<script>
@@ -498,7 +498,7 @@
 		};
 
 		let selectedItems = {};
-		let orderNumber = 1; // 从 1 开始的单号
+		let billNumber = 1; // 从 1 开始的单据编号
 
 		window.onload = function () {
 			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
@@ -507,12 +507,15 @@
 			if (!supervisorName) supervisorName = "Supervisor";
 			if (!cashierName) cashierName = "Cashier";
 
-			const savedOrderNumber = localStorage.getItem("orderNumber");
-			if (savedOrderNumber) {
-				orderNumber = parseInt(savedOrderNumber);
+			// 初始化隐藏支付方式
+			togglePaymentMethod(false);
+
+			const savedBillNumber = localStorage.getItem("billNumber");
+			if (savedBillNumber) {
+				billNumber = parseInt(savedBillNumber);
 			}
 
-			updateCurrentOrderDisplay();
+			updateCurrentBillDisplay();
 
 			const categoryContainer = document.getElementById("categoryContainer");
 			for (let category in categories) {
@@ -622,14 +625,22 @@
 		}
 
 		function saveItem(id, name, price) {
-			const checkbox = document.getElementById('item' + id);
-			const quantity = parseInt(document.getElementById('quantityDisplay' + id).textContent) || 1;
+			const checkbox = document.getElementById("item" + id);
+			const quantity = parseInt(document.getElementById("quantityDisplay" + id).textContent) || 1;
 
 			if (checkbox.checked) {
-				selectedItems[id] = { name: name, quantity: quantity, price: price }; // 确保 name 正确存储
+				selectedItems[id] = { name: name, quantity: quantity, price: price };
 			} else {
 				delete selectedItems[id];
 			}
+
+			// 如果至少有一个商品被选择，显示支付方式
+			if (Object.keys(selectedItems).length > 0) {
+				togglePaymentMethod(true);
+			} else {
+				togglePaymentMethod(false);
+			}
+
 			updateResult();
 		}
 
@@ -677,8 +688,8 @@
 		function updateResult() {
 			let result = "";
 
-			const formattedOrderNumber = orderNumber.toString().padStart(3, "0");
-			result += `Order No: ${formattedOrderNumber}\n`;
+			const formattedBillNumber = billNumber.toString().padStart(3, "0");
+			result += `Bill No: ${formattedBillNumber}\n`;
 
 			result += `Supervisor: ${supervisorName}\n`;
 			result += `Cashier: ${cashierName}\n\n`;
@@ -741,12 +752,30 @@
 		function clearAll() {
 			// 检查是否有商品
 			if (Object.keys(selectedItems).length === 0) {
-				alert("Please add at least one product before proceeding to the next customer.");
-				return; // 阻止进入下一个单号
+				alert("Please add at least one product before proceeding to the next bill.");
+				return;
+			}
+
+			// 检查支付方式
+			const selectedStore = document.querySelector('input[name="store"]:checked');
+			if (!selectedStore) {
+				alert("Please select a payment method before proceeding.");
+				return;
+			}
+
+			// 如果选择了 Cash，需要确保输入了现金金额
+			if (selectedStore.value === "*Cash*") {
+				const cashAmount = parseFloat(document.getElementById("cashAmount").value);
+				const total = parseFloat(calculateTotal());
+
+				if (isNaN(cashAmount) || cashAmount < total) {
+					alert("Please enter a valid cash amount that is equal to or greater than the total amount.");
+					return;
+				}
 			}
 
 			// 自动保存当前单据
-			saveOrder();
+			saveBill();
 
 			// 清空所有数据
 			selectedItems = {};
@@ -754,6 +783,7 @@
 			document.getElementById("result").innerText = "";
 			document.querySelectorAll('input[name="store"]').forEach((input) => (input.checked = false));
 			document.querySelectorAll('input[name="category"]').forEach((input) => (input.checked = false));
+			togglePaymentMethod(false); // 隐藏支付方式
 			hideCashInput(); // 隐藏现金输入框
 			toggleItems();
 		}
@@ -877,77 +907,121 @@
 			setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
 		}
 
-		function saveOrder() {
+		function saveBill() {
 			const text = document.getElementById("result").innerText;
-			const formattedOrderNumber = orderNumber.toString().padStart(3, "0"); // 格式化为三位数，如 001, 002
+			const formattedBillNumber = billNumber.toString().padStart(3, "0"); // 格式化为三位数，如 001, 002
 
 			// 将单据存储到 localStorage 中
-			localStorage.setItem(`order_${formattedOrderNumber}`, text);
+			localStorage.setItem(`bill_${formattedBillNumber}`, text);
 
-			// 更新单号
-			orderNumber++;
-			localStorage.setItem("orderNumber", orderNumber); // 保存新的单号到 localStorage
+			// 更新单据编号
+			billNumber++;
+			localStorage.setItem("billNumber", billNumber); // 保存新的单据编号到 localStorage
 
-			updateCurrentOrderDisplay();
+			updateCurrentBillDisplay();
 
-			alert(`Order ${formattedOrderNumber} saved successfully!`);
+			alert(`Bill ${formattedBillNumber} saved successfully!`);
 		}
 
-		function updateCurrentOrderDisplay() {
-			const formattedOrderNumber = orderNumber.toString().padStart(3, "0");
-			document.getElementById("currentOrderDisplay").textContent = `Current Order: ${formattedOrderNumber}`;
+		function updateCurrentBillDisplay() {
+			const formattedBillNumber = billNumber.toString().padStart(3, "0");
+			document.getElementById("currentBillDisplay").textContent = `Current Bill: ${formattedBillNumber}`;
 		}
 
-		function searchOrder() {
-			const orderInput = document.getElementById('orderSearchInput').value.trim();
-			if (orderInput === '') {
-				alert('Please enter a valid order number.');
-				return;
-			}
+		function searchBill(billInput) {
+			const billKey = `bill_${billInput}`;
+			const billData = localStorage.getItem(billKey);
 
-			const orderData = localStorage.getItem(`order_${orderInput}`);
-			if (orderData) {
-				// 使用模态框显示单据内容
-				showModal(orderData);
+			if (billData) {
+				showModal(billData, billInput); // 调用模态框并传递当前单据编号
 			} else {
-				alert(`Order ${orderInput} not found.`);
+				alert(`Bill ${billInput} not found.`);
 			}
 		}
 
-		function showModal(data) {
+		function showModal(data, currentBill) {
 			// 创建一个模态框
 			const modal = document.createElement("div");
 			modal.id = "modalContainer";
+			
 			modal.style.position = "fixed";
 			modal.style.top = "50%";
 			modal.style.left = "50%";
 			modal.style.transform = "translate(-50%, -50%)";
 			modal.style.backgroundColor = "white";
-			modal.style.color = "black"; // 字体颜色设置为黑色
+			modal.style.color = "black";
 			modal.style.padding = "20px";
 			modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
 			modal.style.borderRadius = "8px";
 			modal.style.zIndex = "1000";
 			modal.style.width = "90%"; // 宽度适配手机
-			modal.style.maxWidth = "400px"; // 在大屏上最大宽度
+			modal.style.maxWidth = "400px"; // 最大宽度
 			modal.style.maxHeight = "80%"; // 最大高度
 			modal.style.overflowY = "auto"; // 内容溢出时滚动
 
 			// 添加单据内容
 			const content = document.createElement("pre");
-			content.style.color = "black"; // 字体颜色设置为黑色
+			content.style.color = "black";
 			content.style.margin = "0";
 			content.style.whiteSpace = "pre-wrap"; // 自动换行
 			content.textContent = data;
 			modal.appendChild(content);
 
+			// 添加按钮容器
+			const buttonContainer = document.createElement("div");
+			buttonContainer.style.display = "flex";
+			buttonContainer.style.justifyContent = "space-between";
+			buttonContainer.style.marginTop = "20px";
+
+			// 添加"前一张"按钮
+			const prevButton = document.createElement("button");
+			prevButton.textContent = "Previous Bill";
+			prevButton.style.backgroundColor = "#007bff";
+			prevButton.style.color = "white";
+			prevButton.style.padding = "10px";
+			prevButton.style.border = "none";
+			prevButton.style.borderRadius = "5px";
+			prevButton.style.cursor = "pointer";
+			prevButton.onclick = function () {
+				const prevBill = (parseInt(currentBill) - 1).toString().padStart(3, "0");
+				if (localStorage.getItem(`bill_${prevBill}`)) {
+					document.body.removeChild(modal); // 关闭当前模态框
+					searchBill(prevBill); // 加载前一张单据
+				} else {
+					alert("No previous bill found.");
+				}
+			};
+			buttonContainer.appendChild(prevButton);
+
+			// 添加"后一张"按钮
+			const nextButton = document.createElement("button");
+			nextButton.textContent = "Next Bill";
+			nextButton.style.backgroundColor = "#007bff";
+			nextButton.style.color = "white";
+			nextButton.style.padding = "10px";
+			nextButton.style.border = "none";
+			nextButton.style.borderRadius = "5px";
+			nextButton.style.cursor = "pointer";
+			nextButton.onclick = function () {
+				const nextBill = (parseInt(currentBill) + 1).toString().padStart(3, "0");
+				if (localStorage.getItem(`bill_${nextBill}`)) {
+					document.body.removeChild(modal); // 关闭当前模态框
+					searchBill(nextBill); // 加载后一张单据
+				} else {
+					alert("No next bill found.");
+				}
+			};
+			buttonContainer.appendChild(nextButton);
+
+			modal.appendChild(buttonContainer);
+
 			// 添加关闭按钮
 			const closeButton = document.createElement("button");
 			closeButton.textContent = "Close";
-			closeButton.style.marginTop = "10px";
-			closeButton.style.backgroundColor = "#007bff";
+			closeButton.style.marginTop = "20px";
+			closeButton.style.backgroundColor = "red";
 			closeButton.style.color = "white";
-			closeButton.style.padding = "10px 15px";
+			closeButton.style.padding = "10px";
 			closeButton.style.border = "none";
 			closeButton.style.borderRadius = "5px";
 			closeButton.style.cursor = "pointer";
@@ -963,24 +1037,33 @@
 			document.body.appendChild(modal);
 		}
 
-		function deleteOrder() {
-			const orderInput = document.getElementById('orderSearchInput').value.trim();
-			if (orderInput === '') {
-				alert('Please enter a valid order number.');
+		function deleteBill() {
+			const billInput = document.getElementById("billSearchInput").value.trim();
+			if (billInput === "") {
+				alert("Please enter a valid bill number.");
 				return;
 			}
 
-			const orderKey = `order_${orderInput}`;
-			const orderData = localStorage.getItem(orderKey);
+			const billKey = `bill_${billInput}`;
+			const billData = localStorage.getItem(billKey);
 
-			if (orderData) {
-				const confirmDelete = confirm(`Are you sure you want to delete order ${orderInput}?`);
+			if (billData) {
+				const confirmDelete = confirm(`Are you sure you want to delete bill ${billInput}?`);
 				if (confirmDelete) {
-					localStorage.removeItem(orderKey);
-					alert(`Order ${orderInput} deleted successfully.`);
+					localStorage.removeItem(billKey);
+					alert(`Bill ${billInput} deleted successfully.`);
 				}
 			} else {
-				alert(`Order ${orderInput} not found.`);
+				alert(`Bill ${billInput} not found.`);
+			}
+		}
+
+		function togglePaymentMethod(show) {
+			const paymentSection = document.querySelector(".payment-section");
+			if (show) {
+				paymentSection.style.display = "block"; // 显示支付方式
+			} else {
+				paymentSection.style.display = "none"; // 隐藏支付方式
 			}
 		}
 
