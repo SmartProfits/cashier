@@ -278,12 +278,7 @@ span {
 
     <div class="action-buttons">
         <button onclick="clearAll()">Next Customers</button>
-        <div id="cashInputContainer" style="display: none;">
-            <input type="number" id="cashAmount" placeholder="Enter cash amount" 
-                   style="background-color: white; color: black; padding: 5px;"
-                   oninput="calculateChange()">
-            <div id="changeAmount" style="color: #e0e0e0; margin-left: 10px; display: inline-block;"></div>
-        </div>
+        <span id="currentOrderDisplay" style="margin-left: 10px; font-weight: bold;">Current Order: 001</span>
     </div>
 
     <div id="result"></div>
@@ -301,6 +296,13 @@ span {
         <button onclick="viewStorage(4)">View 4</button>
     </div>
     <button onclick="clearAllStorage()">Clear All</button>
+
+    <div>
+        <h3>Search or Delete Order</h3>
+        <input type="text" id="orderSearchInput" placeholder="Enter order number (e.g., 001)">
+        <button onclick="searchOrder()">Search</button>
+        <button onclick="deleteOrder()">Delete</button>
+    </div>
 
 <script>
     // 分类商品
@@ -463,15 +465,24 @@ span {
     };
 
     let selectedItems = {};
+    let orderNumber = 1; // 从 1 开始的单号
 
     window.onload = function() {
-        // 提示用户输入 Supervisor 和 Cashier 名字
+        // 初始化 Supervisor 和 Cashier 名字
         supervisorName = prompt('Please enter the Supervisor name:', 'Supervisor');
         cashierName = prompt('Please enter the Cashier name:', 'Cashier');
 
-        // 如果用户未填写，使用默认值
         if (!supervisorName) supervisorName = 'Supervisor';
         if (!cashierName) cashierName = 'Cashier';
+
+        // 恢复本地存储中的 orderNumber
+        const savedOrderNumber = localStorage.getItem('orderNumber');
+        if (savedOrderNumber) {
+            orderNumber = parseInt(savedOrderNumber);
+        }
+
+        // 显示当前单号
+        updateCurrentOrderDisplay();
 
         // 初始化分类选择
         const categoryContainer = document.getElementById('categoryContainer');
@@ -482,350 +493,458 @@ span {
         }
     };
 
-function loadProducts(products) {
-    const productList = document.getElementById('productList');
-    productList.innerHTML = '';
+    function loadProducts(products) {
+        const productList = document.getElementById('productList');
+        productList.innerHTML = '';
 
-    products.forEach(product => {
-        const div = document.createElement('div');
-        if (product.customPrice) {
-            div.innerHTML = `
-                <label>${product.name}</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="number" 
-                           id="price${product.id}" 
-                           placeholder="Enter price" 
-                           style="width: 100px; padding: 5px; background-color: white; color: black;"
-                           step="0.10">
-                    <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
-                    <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
-                </div>
-            `;
+        products.forEach(product => {
+            const div = document.createElement('div');
+            if (product.customPrice) {
+                div.innerHTML = `
+                    <label>${product.name}</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" 
+                               id="price${product.id}" 
+                               placeholder="Enter price" 
+                               style="width: 100px; padding: 5px; background-color: white; color: black;"
+                               step="0.10">
+                        <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
+                        <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
+                    <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
+                    <div style="display: flex; align-items: center;">
+                        <button onclick="decreaseQuantity(${product.id})">-</button>
+                        <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
+                        <button onclick="increaseQuantity(${product.id})">+</button>
+                        <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
+                    </div>
+                `;
+            }
+            productList.appendChild(div);
+        });
+    }
+
+    function removeItem(id) {
+        const checkbox = document.getElementById('item' + id);
+        if (checkbox) {
+            checkbox.checked = false;
+            checkbox.onchange(); // 触发保存操作，移除商品
         } else {
-            div.innerHTML = `
-                <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
-                <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
-                <div style="display: flex; align-items: center;">
-                    <button onclick="decreaseQuantity(${product.id})">-</button>
-                    <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
-                    <button onclick="increaseQuantity(${product.id})">+</button>
-                    <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
-                </div>
-            `;
-        }
-        productList.appendChild(div);
-    });
-}
-
-function removeItem(id) {
-    const checkbox = document.getElementById('item' + id);
-    if (checkbox) {
-        checkbox.checked = false;
-        checkbox.onchange(); // 触发保存操作，移除商品
-    } else {
-        // 如果是自定义商品，直接从 selectedItems 中删除
-        for (const uniqueId in selectedItems) {
-            if (uniqueId.startsWith(`${id}-`)) {
-                delete selectedItems[uniqueId];
-                break;
+            // 如果是自定义商品，直接从 selectedItems 中删除
+            for (const uniqueId in selectedItems) {
+                if (uniqueId.startsWith(`${id}-`)) {
+                    delete selectedItems[uniqueId];
+                    break;
+                }
             }
         }
+        updateResult();
     }
-    updateResult();
-}
 
-function increaseQuantity(id) {
-    const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
-    let currentQuantity = parseInt(quantityDisplay.textContent);
-    currentQuantity++;
-    quantityDisplay.textContent = currentQuantity;
-    saveQuantity(id, currentQuantity);  // 更新选中的商品数量
-    updateResult();
-}
-
-function decreaseQuantity(id) {
-    const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
-    let currentQuantity = parseInt(quantityDisplay.textContent);
-    if (currentQuantity > 1) {  // 确保数量不小于 1
-        currentQuantity--;
+    function increaseQuantity(id) {
+        const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+        let currentQuantity = parseInt(quantityDisplay.textContent);
+        currentQuantity++;
         quantityDisplay.textContent = currentQuantity;
         saveQuantity(id, currentQuantity);  // 更新选中的商品数量
         updateResult();
     }
-}
 
-function searchItems() {
-    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
-    const allProducts = Object.values(categories).flat();
-    const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
-    
-    // 清空建议列表
-    const suggestionsDiv = document.getElementById('suggestions');
-    suggestionsDiv.innerHTML = '';
-    
-    // 如果搜索栏为空，不显示建议
-    if (searchTerm === '') {
-        return;
-    }
-
-    // 显示建议列表
-    filteredProducts.forEach(product => {
-        const suggestionItem = document.createElement('div');
-        suggestionItem.textContent = product.name;
-        suggestionItem.onclick = function() {
-            document.getElementById('searchBar').value = product.name;
-            suggestionsDiv.innerHTML = '';  // 清空建议列表
-            loadProducts([product]);  // 显示选中的产品信息
-        };
-        suggestionsDiv.appendChild(suggestionItem);
-    });
-}
-
-function saveItem(id, name, price) {
-    const checkbox = document.getElementById('item' + id);
-    const quantity = parseInt(document.getElementById('quantityDisplay' + id).textContent) || 1;
-
-    if (checkbox.checked) {
-        selectedItems[id] = { name: name, quantity: quantity, price: price }; // 确保 name 正确存储
-    } else {
-        delete selectedItems[id];
-    }
-    updateResult();
-}
-
-function saveQuantity(id, quantity) {
-    if (selectedItems[id]) {
-        selectedItems[id].quantity = quantity;
-    }
-}
-
-function toggleItems() {
-    let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
-    let quantities = document.querySelectorAll('#productList input[type="number"]');
-
-    checkboxes.forEach(checkbox => checkbox.disabled = false);
-    quantities.forEach(quantity => quantity.disabled = false);
-}
-
-function showCategory() {
-    let selectedCategory = document.querySelector('input[name="category"]:checked');
-    
-    if (selectedCategory) {
-        let categoryValue = selectedCategory.value;
-        let productsToShow = categories[categoryValue];
-        
-        if (productsToShow) {
-            loadProducts(productsToShow);
-        } else {
-            console.error("没有找到该分类的商品");
+    function decreaseQuantity(id) {
+        const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+        let currentQuantity = parseInt(quantityDisplay.textContent);
+        if (currentQuantity > 1) {  // 确保数量不小于 1
+            currentQuantity--;
+            quantityDisplay.textContent = currentQuantity;
+            saveQuantity(id, currentQuantity);  // 更新选中的商品数量
+            updateResult();
         }
-    } else {
-        console.error("没有选中任何分类");
     }
 
-    toggleItems();
-}
-
-function calculateTotal() {
-    let total = 0;
-    for (const item of Object.values(selectedItems)) {
-        total += item.quantity * item.price;
-    }
-    return total.toFixed(2);
-}
-
-function updateResult() {
-    let result = '';
-
-    // 显示 Supervisor 和 Cashier 的名字
-    result += `Supervisor: ${supervisorName}\n`;
-    result += `Cashier: ${cashierName}\n\n`;
-
-    let selectedStore = document.querySelector('input[name="store"]:checked');
-    if (selectedStore) {
-        result += 'Payment: ' + selectedStore.value + '\n\n';
-    } else {
-        result += 'Payment: No Select\n';
-    }
-
-    // 显示所有商品记录
-    for (const [uniqueId, item] of Object.entries(selectedItems)) {
-        const name = item.name || 'Unknown Item'; // 防止 name 为 undefined
-        const quantity = item.quantity || 0; // 防止 quantity 为 undefined
-        const price = item.price || 0; // 防止 price 为 undefined
-        result += `${name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
-    }
-
-    result += `\nTotal: RM${calculateTotal()}\n`;
-
-    // 添加现金和找零信息
-    if (selectedStore && selectedStore.value === '*Cash*') {
-        const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
-        result += `Cash: RM${cashAmount.toFixed(2)}\n`;
+    function searchItems() {
+        const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+        const allProducts = Object.values(categories).flat();
+        const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
         
+        // 清空建议列表
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = '';
+        
+        // 如果搜索栏为空，不显示建议
+        if (searchTerm === '') {
+            return;
+        }
+
+        // 显示建议列表
+        filteredProducts.forEach(product => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.textContent = product.name;
+            suggestionItem.onclick = function() {
+                document.getElementById('searchBar').value = product.name;
+                suggestionsDiv.innerHTML = '';  // 清空建议列表
+                loadProducts([product]);  // 显示选中的产品信息
+            };
+            suggestionsDiv.appendChild(suggestionItem);
+        });
+    }
+
+    function saveItem(id, name, price) {
+        const checkbox = document.getElementById('item' + id);
+        const quantity = parseInt(document.getElementById('quantityDisplay' + id).textContent) || 1;
+
+        if (checkbox.checked) {
+            selectedItems[id] = { name: name, quantity: quantity, price: price }; // 确保 name 正确存储
+        } else {
+            delete selectedItems[id];
+        }
+        updateResult();
+    }
+
+    function saveQuantity(id, quantity) {
+        if (selectedItems[id]) {
+            selectedItems[id].quantity = quantity;
+        }
+    }
+
+    function toggleItems() {
+        let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
+        let quantities = document.querySelectorAll('#productList input[type="number"]');
+
+        checkboxes.forEach(checkbox => checkbox.disabled = false);
+        quantities.forEach(quantity => quantity.disabled = false);
+    }
+
+    function showCategory() {
+        let selectedCategory = document.querySelector('input[name="category"]:checked');
+        
+        if (selectedCategory) {
+            let categoryValue = selectedCategory.value;
+            let productsToShow = categories[categoryValue];
+            
+            if (productsToShow) {
+                loadProducts(productsToShow);
+            } else {
+                console.error("没有找到该分类的商品");
+            }
+        } else {
+            console.error("没有选中任何分类");
+        }
+
+        toggleItems();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        for (const item of Object.values(selectedItems)) {
+            total += item.quantity * item.price;
+        }
+        return total.toFixed(2);
+    }
+
+    function updateResult() {
+        let result = '';
+
+        // 显示单号
+        const formattedOrderNumber = orderNumber.toString().padStart(3, '0');
+        result += `Order No: ${formattedOrderNumber}\n`;
+
+        // 显示 Supervisor 和 Cashier 的名字
+        result += `Supervisor: ${supervisorName}\n`;
+        result += `Cashier: ${cashierName}\n\n`;
+
+        let selectedStore = document.querySelector('input[name="store"]:checked');
+        if (selectedStore) {
+            result += 'Payment: ' + selectedStore.value + '\n\n';
+        } else {
+            result += 'Payment: No Select\n';
+        }
+
+        // 显示所有商品记录
+        for (const [uniqueId, item] of Object.entries(selectedItems)) {
+            const name = item.name || 'Unknown Item'; // 防止 name 为 undefined
+            const quantity = item.quantity || 0; // 防止 quantity 为 undefined
+            const price = item.price || 0; // 防止 price 为 undefined
+            result += `${name} - ${quantity} pc, RM${(quantity * price).toFixed(2)}\n`;
+        }
+
+        result += `\nTotal: RM${calculateTotal()}\n`;
+
+        // 添加现金和找零信息
+        if (selectedStore && selectedStore.value === '*Cash*') {
+            const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+            result += `Cash: RM${cashAmount.toFixed(2)}\n`;
+            
+            const total = parseFloat(calculateTotal());
+            const change = cashAmount - total;
+            
+            if (!isNaN(change) && change >= 0) {
+                result += `Change: RM${change.toFixed(2)}\n`;
+            } else if (!isNaN(change) && change < 0) {
+                result += `Insufficient amount\n`;
+            }
+        }
+
+        // 添加日期和时间
+        const currentDate = new Date();
+        const dateString = currentDate.toLocaleDateString(); // 格式：YYYY/MM/DD
+        const timeString = currentDate.toLocaleTimeString(); // 格式：HH:mm:ss
+        result += `\nDate: ${dateString}\nTime: ${timeString}`;
+
+        document.getElementById('result').innerText = result;
+    }
+
+    function saveToStorage(position) {
+        const text = document.getElementById('result').innerText;
+        localStorage.setItem('salesItemPosition' + position, text);
+        alert('Data Saved ' + position);
+        const saveButton = document.querySelector(`button[onclick="saveToStorage(${position})"]`);
+        saveButton.classList.add('saved-button');
+    }
+
+    function viewStorage(position) {
+        const storedText = localStorage.getItem('salesItemPosition' + position);
+        if (storedText) {
+            alert('Save ' + position + ' Data:\n' + storedText);
+        } else {
+            alert('Save ' + position + ' No Data');
+        }
+    }
+
+    function clearAll() {
+        // 自动保存当前单据
+        saveOrder();
+
+        // 清空所有数据
+        selectedItems = {};
+        document.getElementById('productList').innerHTML = '';
+        document.getElementById('result').innerText = '';
+        document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
+        document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+        toggleItems();
+    }
+
+    function toggleDarkMode() {
+        const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
+        const toggleButton = document.querySelector('.toggle-mode-btn');
+
+        if (isDarkModeEnabled) {
+            toggleButton.textContent = '切换至正常模式';
+            localStorage.setItem('dark-mode', 'enabled');
+        } else {
+            toggleButton.textContent = '切换至黑暗模式';
+            localStorage.setItem('dark-mode', 'disabled');
+        }
+    }
+
+    function clearAllStorage() {
+        selectedItems = {};
+        document.getElementById('productList').innerHTML = '';
+        document.getElementById('result').innerText = '';
+        document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
+        document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
+        toggleItems();
+        // 清除本地存储内容并复原按钮颜色
+        for (let i = 1; i <= 5; i++) {
+            localStorage.removeItem('salesItemPosition' + i);
+            const saveButton = document.querySelector(`button[onclick="saveToStorage(${i})"]`);
+            saveButton.classList.remove('saved-button');
+        }
+        alert('所有内容已清空');
+    }
+
+    function toggleCashInput() {
+        document.getElementById('cashInputContainer').style.display = 'block';
+        calculateChange();
+    }
+
+    function hideCashInput() {
+        document.getElementById('cashInputContainer').style.display = 'none';
+        document.getElementById('changeAmount').textContent = '';
+    }
+
+    function calculateChange() {
+        const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
         const total = parseFloat(calculateTotal());
         const change = cashAmount - total;
         
         if (!isNaN(change) && change >= 0) {
-            result += `Change: RM${change.toFixed(2)}\n`;
+            document.getElementById('changeAmount').textContent = `Change: RM${change.toFixed(2)}`;
         } else if (!isNaN(change) && change < 0) {
-            result += `Insufficient amount\n`;
+            document.getElementById('changeAmount').textContent = `Insufficient amount`;
+        } else {
+            document.getElementById('changeAmount').textContent = '';
+        }
+        
+        updateResult();
+    }
+
+    function selectPayment(radio) {
+        // 移除所有支付选项的选中样式
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // 为选中的支付选项添加样式
+        if (radio.checked) {
+            radio.closest('.payment-option').classList.add('selected');
         }
     }
 
-    // 添加日期和时间
-    const currentDate = new Date();
-    const dateString = currentDate.toLocaleDateString(); // 格式：YYYY/MM/DD
-    const timeString = currentDate.toLocaleTimeString(); // 格式：HH:mm:ss
-    result += `\nDate: ${dateString}\nTime: ${timeString}`;
+    function saveCustomItem(id, name) {
+        const checkbox = document.getElementById('item' + id);
+        const priceInput = document.getElementById('price' + id);
+        const quantity = document.getElementById('quantityDisplay' + id).textContent || 1;
+        const price = parseFloat(priceInput.value) || 0;
 
-    document.getElementById('result').innerText = result;
-}
-
-function saveToStorage(position) {
-    const text = document.getElementById('result').innerText;
-    localStorage.setItem('salesItemPosition' + position, text);
-    alert('Data Saved ' + position);
-    const saveButton = document.querySelector(`button[onclick="saveToStorage(${position})"]`);
-    saveButton.classList.add('saved-button');
-}
-
-function viewStorage(position) {
-    const storedText = localStorage.getItem('salesItemPosition' + position);
-    if (storedText) {
-        alert('Save ' + position + ' Data:\n' + storedText);
-    } else {
-        alert('Save ' + position + ' No Data');
+        if (checkbox.checked) {
+            if (price <= 0) {
+                alert('Please enter a valid price');
+                checkbox.checked = false;
+                return;
+            }
+            selectedItems[id] = { quantity: quantity, price: price };
+        } else {
+            delete selectedItems[id];
+        }
+        updateResult();
     }
-}
 
-function clearAll() {
-    selectedItems = {};
-    document.getElementById('productList').innerHTML = '';
-    document.getElementById('result').innerText = '';
-    document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
-    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
-    toggleItems();
-}
-
-function toggleDarkMode() {
-    const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
-    const toggleButton = document.querySelector('.toggle-mode-btn');
-
-    if (isDarkModeEnabled) {
-        toggleButton.textContent = '切换至正常模式';
-        localStorage.setItem('dark-mode', 'enabled');
-    } else {
-        toggleButton.textContent = '切换至黑暗模式';
-        localStorage.setItem('dark-mode', 'disabled');
+    function updateCustomPrice(id) {
+        const checkbox = document.getElementById('item' + id);
+        if (checkbox.checked) {
+            saveCustomItem(id, '');
+        }
     }
-}
 
-function clearAllStorage() {
-    selectedItems = {};
-    document.getElementById('productList').innerHTML = '';
-    document.getElementById('result').innerText = '';
-    document.querySelectorAll('input[name="store"]').forEach(input => input.checked = false);
-    document.querySelectorAll('input[name="category"]').forEach(input => input.checked = false);
-    toggleItems();
-    // 清除本地存储内容并复原按钮颜色
-    for (let i = 1; i <= 5; i++) {
-        localStorage.removeItem('salesItemPosition' + i);
-        const saveButton = document.querySelector(`button[onclick="saveToStorage(${i})"]`);
-        saveButton.classList.remove('saved-button');
-    }
-    alert('所有内容已清空');
-}
+    // 添加专门处理 Add 按钮点击事件的函数
+    function addCustomItem(id, name) {
+        const priceInput = document.getElementById('price' + id);
+        const price = parseFloat(priceInput.value);
 
-function toggleCashInput() {
-    document.getElementById('cashInputContainer').style.display = 'block';
-    calculateChange();
-}
-
-function hideCashInput() {
-    document.getElementById('cashInputContainer').style.display = 'none';
-    document.getElementById('changeAmount').textContent = '';
-}
-
-function calculateChange() {
-    const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
-    const total = parseFloat(calculateTotal());
-    const change = cashAmount - total;
-    
-    if (!isNaN(change) && change >= 0) {
-        document.getElementById('changeAmount').textContent = `Change: RM${change.toFixed(2)}`;
-    } else if (!isNaN(change) && change < 0) {
-        document.getElementById('changeAmount').textContent = `Insufficient amount`;
-    } else {
-        document.getElementById('changeAmount').textContent = '';
-    }
-    
-    updateResult();
-}
-
-function selectPayment(radio) {
-    // 移除所有支付选项的选中样式
-    document.querySelectorAll('.payment-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-    
-    // 为选中的支付选项添加样式
-    if (radio.checked) {
-        radio.closest('.payment-option').classList.add('selected');
-    }
-}
-
-function saveCustomItem(id, name) {
-    const checkbox = document.getElementById('item' + id);
-    const priceInput = document.getElementById('price' + id);
-    const quantity = document.getElementById('quantityDisplay' + id).textContent || 1;
-    const price = parseFloat(priceInput.value) || 0;
-
-    if (checkbox.checked) {
-        if (price <= 0) {
+        if (isNaN(price) || price <= 0) {
             alert('Please enter a valid price');
-            checkbox.checked = false;
             return;
         }
-        selectedItems[id] = { quantity: quantity, price: price };
-    } else {
-        delete selectedItems[id];
-    }
-    updateResult();
-}
 
-function updateCustomPrice(id) {
-    const checkbox = document.getElementById('item' + id);
-    if (checkbox.checked) {
-        saveCustomItem(id, '');
-    }
-}
+        // 生成唯一的 ID，避免重复
+        const uniqueId = `${id}-${Date.now()}`;
 
-// 添加专门处理 Add 按钮点击事件的函数
-function addCustomItem(id, name) {
-    const priceInput = document.getElementById('price' + id);
-    const price = parseFloat(priceInput.value);
+        // 添加到 selectedItems，确保每次都是新记录
+        selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
 
-    if (isNaN(price) || price <= 0) {
-        alert('Please enter a valid price');
-        return;
+        updateResult();
+
+        // 在页面上显示成功信息
+        const successMessage = document.createElement('div');
+        successMessage.textContent = `${name} added successfully!`;
+        successMessage.style.color = 'green';
+        document.body.appendChild(successMessage);
+        setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
     }
 
-    // 生成唯一的 ID，避免重复
-    const uniqueId = `${id}-${Date.now()}`;
+    function saveOrder() {
+        const text = document.getElementById('result').innerText;
+        const formattedOrderNumber = orderNumber.toString().padStart(3, '0'); // 格式化为三位数，如 001, 002
 
-    // 添加到 selectedItems，确保每次都是新记录
-    selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
+        // 将单据存储到 localStorage 中
+        localStorage.setItem(`order_${formattedOrderNumber}`, text);
 
-    updateResult();
+        // 更新单号
+        orderNumber++;
+        localStorage.setItem('orderNumber', orderNumber); // 保存新的单号到 localStorage
 
-    // 在页面上显示成功信息
-    const successMessage = document.createElement('div');
-    successMessage.textContent = `${name} added successfully!`;
-    successMessage.style.color = 'green';
-    document.body.appendChild(successMessage);
-    setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
-}
+        // 更新当前单号显示
+        updateCurrentOrderDisplay();
+
+        alert(`Order ${formattedOrderNumber} saved successfully!`);
+    }
+
+    function updateCurrentOrderDisplay() {
+        const formattedOrderNumber = orderNumber.toString().padStart(3, '0');
+        document.getElementById('currentOrderDisplay').textContent = `Current Order: ${formattedOrderNumber}`;
+    }
+
+    function searchOrder() {
+        const orderInput = document.getElementById('orderSearchInput').value.trim();
+        if (orderInput === '') {
+            alert('Please enter a valid order number.');
+            return;
+        }
+
+        const orderData = localStorage.getItem(`order_${orderInput}`);
+        if (orderData) {
+            // 使用模态框显示单据内容
+            showModal(orderData);
+        } else {
+            alert(`Order ${orderInput} not found.`);
+        }
+    }
+
+    function showModal(data) {
+        // 创建一个模态框
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.backgroundColor = 'white';
+        modal.style.padding = '20px';
+        modal.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+        modal.style.borderRadius = '8px';
+        modal.style.zIndex = '1000';
+        modal.style.width = '400px';
+        modal.style.maxHeight = '400px';
+        modal.style.overflowY = 'auto';
+
+        // 添加单据内容
+        const content = document.createElement('pre');
+        content.style.color = 'black'; // 字体颜色设置为黑色
+        content.textContent = data;
+        modal.appendChild(content);
+
+        // 添加关闭按钮
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.style.marginTop = '10px';
+        closeButton.style.backgroundColor = '#007bff';
+        closeButton.style.color = 'white';
+        closeButton.style.padding = '5px 10px';
+        closeButton.style.border = 'none';
+        closeButton.style.cursor = 'pointer';
+        closeButton.onclick = function() {
+            document.body.removeChild(modal);
+        };
+
+        modal.appendChild(closeButton);
+
+        // 添加模态框到 body
+        document.body.appendChild(modal);
+    }
+
+    function deleteOrder() {
+        const orderInput = document.getElementById('orderSearchInput').value.trim();
+        if (orderInput === '') {
+            alert('Please enter a valid order number.');
+            return;
+        }
+
+        const orderKey = `order_${orderInput}`;
+        const orderData = localStorage.getItem(orderKey);
+
+        if (orderData) {
+            const confirmDelete = confirm(`Are you sure you want to delete order ${orderInput}?`);
+            if (confirmDelete) {
+                localStorage.removeItem(orderKey);
+                alert(`Order ${orderInput} deleted successfully.`);
+            }
+        } else {
+            alert(`Order ${orderInput} not found.`);
+        }
+    }
 
 </script>
 <p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
