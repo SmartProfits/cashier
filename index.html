@@ -279,30 +279,34 @@
 		<h3>Payment Method</h3>
 		<div class="payment-options">
 			<label class="payment-option">
-				<input type="radio" name="store" value="*Cash*"
-					onclick="toggleCashInput(); updateResult(); selectPayment(this)">
+				<input type="radio" name="store" value="*Cash*" onclick="toggleCashInput(); updateResult(); selectPayment(this)">
 				<span>
 					💵<br>
 					Cash
 				</span>
 			</label>
 			<label class="payment-option">
-				<input type="radio" name="store" value="*Card*"
-					onclick="hideCashInput(); updateResult(); selectPayment(this)">
+				<input type="radio" name="store" value="*Card*" onclick="hideCashInput(); updateResult(); selectPayment(this)">
 				<span>
 					💳<br>
 					Card
 				</span>
 			</label>
 			<label class="payment-option">
-				<input type="radio" name="store" value="*E-Wallet*"
-					onclick="hideCashInput(); updateResult(); selectPayment(this)">
+				<input type="radio" name="store" value="*E-Wallet*" onclick="hideCashInput(); updateResult(); selectPayment(this)">
 				<span>
 					📱<br>
 					E-wallet
 				</span>
 			</label>
 		</div>
+	</div>
+
+	<div id="cashInputContainer" style="display: none;">
+		<input type="number" id="cashAmount" placeholder="Enter cash amount" 
+			   style="background-color: white; color: black; padding: 5px;"
+			   oninput="calculateChange()">
+		<div id="changeAmount" style="color: #e0e0e0; margin-left: 10px; display: inline-block;"></div>
 	</div>
 
 	<div class="action-buttons">
@@ -750,6 +754,7 @@
 			document.getElementById("result").innerText = "";
 			document.querySelectorAll('input[name="store"]').forEach((input) => (input.checked = false));
 			document.querySelectorAll('input[name="category"]').forEach((input) => (input.checked = false));
+			hideCashInput(); // 隐藏现金输入框
 			toggleItems();
 		}
 
@@ -783,26 +788,26 @@
 		}
 
 		function toggleCashInput() {
-			document.getElementById('cashInputContainer').style.display = 'block';
+			document.getElementById("cashInputContainer").style.display = "block";
 			calculateChange();
 		}
 
 		function hideCashInput() {
-			document.getElementById('cashInputContainer').style.display = 'none';
-			document.getElementById('changeAmount').textContent = '';
+			document.getElementById("cashInputContainer").style.display = "none";
+			document.getElementById("changeAmount").textContent = "";
 		}
 
 		function calculateChange() {
-			const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+			const cashAmount = parseFloat(document.getElementById("cashAmount").value) || 0;
 			const total = parseFloat(calculateTotal());
 			const change = cashAmount - total;
 
 			if (!isNaN(change) && change >= 0) {
-				document.getElementById('changeAmount').textContent = `Change: RM${change.toFixed(2)}`;
+				document.getElementById("changeAmount").textContent = `Change: RM${change.toFixed(2)}`;
 			} else if (!isNaN(change) && change < 0) {
-				document.getElementById('changeAmount').textContent = `Insufficient amount`;
+				document.getElementById("changeAmount").textContent = `Insufficient amount`;
 			} else {
-				document.getElementById('changeAmount').textContent = '';
+				document.getElementById("changeAmount").textContent = "";
 			}
 
 			updateResult();
@@ -810,13 +815,13 @@
 
 		function selectPayment(radio) {
 			// 移除所有支付选项的选中样式
-			document.querySelectorAll('.payment-option').forEach(option => {
-				option.classList.remove('selected');
+			document.querySelectorAll(".payment-option").forEach((option) => {
+				option.classList.remove("selected");
 			});
 
 			// 为选中的支付选项添加样式
 			if (radio.checked) {
-				radio.closest('.payment-option').classList.add('selected');
+				radio.closest(".payment-option").classList.add("selected");
 			}
 		}
 
@@ -873,25 +878,24 @@
 		}
 
 		function saveOrder() {
-			const text = document.getElementById('result').innerText;
-			const formattedOrderNumber = orderNumber.toString().padStart(3, '0'); // 格式化为三位数，如 001, 002
+			const text = document.getElementById("result").innerText;
+			const formattedOrderNumber = orderNumber.toString().padStart(3, "0"); // 格式化为三位数，如 001, 002
 
 			// 将单据存储到 localStorage 中
 			localStorage.setItem(`order_${formattedOrderNumber}`, text);
 
 			// 更新单号
 			orderNumber++;
-			localStorage.setItem('orderNumber', orderNumber); // 保存新的单号到 localStorage
+			localStorage.setItem("orderNumber", orderNumber); // 保存新的单号到 localStorage
 
-			// 更新当前单号显示
 			updateCurrentOrderDisplay();
 
 			alert(`Order ${formattedOrderNumber} saved successfully!`);
 		}
 
 		function updateCurrentOrderDisplay() {
-			const formattedOrderNumber = orderNumber.toString().padStart(3, '0');
-			document.getElementById('currentOrderDisplay').textContent = `Current Order: ${formattedOrderNumber}`;
+			const formattedOrderNumber = orderNumber.toString().padStart(3, "0");
+			document.getElementById("currentOrderDisplay").textContent = `Current Order: ${formattedOrderNumber}`;
 		}
 
 		function searchOrder() {
