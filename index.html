@@ -263,7 +263,16 @@
 	<div class="header">
 		<h1>Sales Listing</h1>
 	</div>
-
+	<div id="storeSelection" style="margin-bottom: 20px;">
+		<label for="storeDropdown">Select Store:</label>
+		<select id="storeDropdown">
+			<option value="" disabled selected>--Select Store--</option>
+			<option value="JKL">JKL</option>
+			<option value="TOM">TOM</option>
+			<option value="Ole-Ole">Ole-Ole</option>
+		</select>
+		<button onclick="selectStore()" style="margin-top: 10px;">Confirm Store</button>
+	</div>
 	<div class="search-container">
 		<input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''"
 			onkeyup="searchItems()">
@@ -515,7 +524,6 @@
 		let cashierName = "";
 
 		window.onload = function () {
-			// 初始化分类选择
 			const categoryContainer = document.getElementById("categoryContainer");
 			for (let category in categories) {
 				const label = document.createElement("label");
@@ -523,7 +531,6 @@
 				categoryContainer.appendChild(label);
 			}
 
-			// 显示店铺选择界面
 			document.getElementById("storeSelection").style.display = "block";
 		};
 
@@ -536,34 +543,30 @@
 				return;
 			}
 
-			// 输入 Supervisor 和 Cashier 的名字
 			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
 			cashierName = prompt("Please enter the Cashier name:", "Cashier");
 
 			if (!supervisorName) supervisorName = "Supervisor";
 			if (!cashierName) cashierName = "Cashier";
 
-			// 隐藏店铺选择界面并重置数据
 			document.getElementById("storeSelection").style.display = "none";
 			resetAllData();
 			updateCurrentBillDisplay();
 		}
 
-		// 重置所有单据数据并重新从 001 开始
 		function resetAllData() {
 			billNumber = 1;
 			salesSummary = { cash: 0, card: 0, ewallet: 0 };
 			soldItems = {};
 			selectedItems = {};
 
-			// 清空本地存储中的所有单据
 			Object.keys(localStorage).forEach((key) => {
 				if (key.startsWith("bill_")) {
 					localStorage.removeItem(key);
 				}
 			});
 
-			localStorage.setItem("billNumber", billNumber); // 从 001 开始
+			localStorage.setItem("billNumber", billNumber);
 			alert(`All previous data has been reset. Starting fresh from Bill 001.`);
 		}
 
@@ -1130,14 +1133,16 @@
 			modal.style.maxHeight = "80%";
 			modal.style.overflowY = "auto";
 
-			// 添加统计数据
 			const content = document.createElement("div");
 			content.style.color = "black";
+
+			// 商品排序：按购买数量降序
+			const sortedItems = Object.entries(soldItems).sort((a, b) => b[1].quantity - a[1].quantity);
 			let itemDetails = "";
-			for (const itemName in soldItems) {
-				const item = soldItems[itemName];
+			sortedItems.forEach(([itemName, item]) => {
 				itemDetails += `<p>${itemName} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}</p>`;
-			}
+			});
+
 			content.innerHTML = `
 				<h3>Sales Closing</h3>
 				<p><strong>Store:</strong> ${selectedStore}</p>
@@ -1147,25 +1152,23 @@
 				<p><strong>Card:</strong> RM${salesSummary.card.toFixed(2)}</p>
 				<p><strong>E-Wallet:</strong> RM${salesSummary.ewallet.toFixed(2)}</p>
 				<p><strong>Total Sales:</strong> RM${totalSales.toFixed(2)}</p>
-				<h4>Sold Items:</h4>
+				<h4>Sold Items (Sorted by Quantity):</h4>
 				${itemDetails}
 			`;
 			modal.appendChild(content);
 
-			// 添加生成 PDF 按钮
 			const pdfButton = document.createElement("button");
 			pdfButton.textContent = "Generate PDF";
-			pdfButton.style.marginTop = "10px";
-			pdfButton.style.backgroundColor = "#007bff";
-			pdfButton.style.color = "white";
-			pdfButton.style.padding = "10px";
-			pdfButton.style.border = "none";
-			pdfButton.style.borderRadius = "5px";
-			pdfButton.style.cursor = "pointer";
-			pdfButton.onclick = generatePDF;
-			modal.appendChild(pdfButton);
+				pdfButton.style.marginTop = "10px";
+				pdfButton.style.backgroundColor = "#007bff";
+				pdfButton.style.color = "white";
+				pdfButton.style.padding = "10px";
+				pdfButton.style.border = "none";
+				pdfButton.style.borderRadius = "5px";
+				pdfButton.style.cursor = "pointer";
+				pdfButton.onclick = generatePDF;
+				modal.appendChild(pdfButton);
 
-			// 添加关闭按钮
 			const closeButton = document.createElement("button");
 			closeButton.textContent = "Close";
 			closeButton.style.marginTop = "10px";
@@ -1181,7 +1184,6 @@
 
 			modal.appendChild(closeButton);
 
-			// 添加模态框到 body
 			document.body.appendChild(modal);
 		}
 
@@ -1189,10 +1191,16 @@
 			const { jsPDF } = window.jspdf;
 			const doc = new jsPDF();
 
-			// 标题
+			// 获取当前日期
+			const currentDate = new Date();
+			const dateString = currentDate.toLocaleDateString();
+			const formattedDate = `${dateString}`;
+
+			// 标题和日期
 			doc.setFontSize(18);
-			doc.text("Sales Closing Report", 105, 20, { align: "center" });
+			doc.text("Sales Closing Report", 10, 20);
 			doc.setFontSize(12);
+			doc.text(`Date: ${formattedDate}`, 180, 20, { align: "right" });
 
 			// 店铺、Supervisor 和 Cashier 信息
 			doc.text(`Store: ${selectedStore}`, 10, 40);
@@ -1211,33 +1219,28 @@
 			doc.setLineWidth(0.5);
 			doc.line(10, 130, 200, 130);
 
-			// 售出物品统计
-			doc.text("Sold Items:", 10, 140);
-			let y = 150; // 起始位置
-			for (const itemName in soldItems) {
-				const item = soldItems[itemName];
-				doc.text(`${itemName} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}`, 20, y);
-				y += 10;
-			}
+			// 售出物品统计（按购买总数从高到低排序）
+			const sortedItems = Object.entries(soldItems).sort((a, b) => b[1].quantity - a[1].quantity);
 
-			// 保存 PDF
-			doc.save("Sales_Closing_Report.pdf");
+			doc.text("Sold Items (Sorted by Quantity):", 10, 140);
+			let y = 150; // 起始位置
+			sortedItems.forEach(([itemName, item]) => {
+				doc.text(
+					`${itemName} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}`,
+					20,
+					y
+				);
+				y += 10;
+			});
+
+			// 保存 PDF 文件
+			const pdfFileName = `${selectedStore}_${formattedDate.replace(/\//g, "-")}.pdf`;
+			doc.save(pdfFileName);
 		}
 
 	</script>
 	<p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
 
-	<!-- Store Selection -->
-	<div id="storeSelection" style="margin-bottom: 20px;">
-		<label for="storeDropdown">Select Store:</label>
-		<select id="storeDropdown">
-			<option value="" disabled selected>--Select Store--</option>
-			<option value="JKL">JKL</option>
-			<option value="TOM">TOM</option>
-			<option value="Ole-Ole">Ole-Ole</option>
-		</select>
-		<button onclick="selectStore()" style="margin-top: 10px;">Confirm Store</button>
-	</div>
 
 </body>
 
