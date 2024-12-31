@@ -509,18 +509,29 @@
 			}
 
 			// 开始时显示输入 Supervisor 和 Cashier 的弹窗
-			setTimeout(promptSupervisorAndCashier, 500);
+			showSupervisorAndCashierModal();
 		};
 
-		function promptSupervisorAndCashier() {
-			// 输入 Supervisor 和 Cashier 名字
-			supervisorName = prompt("Please enter the Supervisor name:", "Supervisor");
-			cashierName = prompt("Please enter the Cashier name:", "Cashier");
+		function showSupervisorAndCashierModal() {
+			const modal = document.getElementById("supervisorModal");
+			modal.style.display = "block"; // 显示模态框
+		}
 
-			if (!supervisorName || !cashierName) {
-				alert("Supervisor and Cashier names are required!");
-				return promptSupervisorAndCashier(); // 强制用户填写
+		function submitSupervisorAndCashier() {
+			const supervisorInput = document.getElementById("supervisorInput").value.trim();
+			const cashierInput = document.getElementById("cashierInput").value.trim();
+
+			if (!supervisorInput || !cashierInput) {
+				alert("Both Supervisor and Cashier names are required!");
+				return;
 			}
+
+			supervisorName = supervisorInput;
+			cashierName = cashierInput;
+
+			// 隐藏模态框
+			const modal = document.getElementById("supervisorModal");
+			modal.style.display = "none";
 
 			// 显示店铺选择模态框
 			showStoreSelectionModal();
@@ -1230,6 +1241,16 @@
 
 	</script>
 	<p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
+
+	<!-- Supervisor 和 Cashier 输入模态框 -->
+	<div id="supervisorModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border-radius: 10px; padding: 20px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+		<h3 style="text-align: center; color: black;">Enter Supervisor and Cashier</h3>
+		<div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;">
+			<input id="supervisorInput" type="text" placeholder="Supervisor Name" style="width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;">
+			<input id="cashierInput" type="text" placeholder="Cashier Name" style="width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;">
+			<button onclick="submitSupervisorAndCashier()" style="width: 200px; height: 50px; font-size: 16px; background-color: black; color: white; border: none; border-radius: 5px; cursor: pointer;">Submit</button>
+		</div>
+	</div>
 
 	<!-- 店铺选择模态框 -->
 	<div id="storeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border-radius: 10px; padding: 20px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
