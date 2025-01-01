@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Overview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #999;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media screen and (max-width: 600px) {
+            table,
+            th,
+            td {
+                font-size: 0.9rem;
+            }
+
+            .store-select {
+                width: 100%;
+            }
+        }
+
+        /* 店铺选择样式 */
+        .store-select {
+            width: 200px;
+            padding: 10px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        /* 表格容器样式 */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        /* 单据列表样式 */
+        .bill-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bill-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bill-list th,
+        .bill-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .bill-list th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+
+<body>
+    <h1>Sales Overview</h1>
+
+    <div class="section">
+        <h2>选择店铺</h2>
+        <select id="storeSelect" class="store-select" onchange="fetchStoreData()">
+            <option value="">-- 选择店铺 --</option>
+            <option value="JKL">JKL</option>
+            <option value="TOM">TOM</option>
+            <option value="Ole-Ole">Ole-Ole</option>
+            <!-- 根据需要添加更多店铺 -->
+        </select>
+    </div>
+
+    <div class="section" id="salesSummarySection" style="display: none;">
+        <h2>销售摘要</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>支付方式</th>
+                        <th>总金额 (RM)</th>
+                    </tr>
+                </thead>
+                <tbody id="salesSummaryTable">
+                    <!-- 数据将通过 JavaScript 填充 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section" id="soldItemsSection" style="display: none;">
+        <h2>售出物品 (按数量排序)</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>物品名称</th>
+                        <th>数量</th>
+                        <th>总销售额 (RM)</th>
+                    </tr>
+                </thead>
+                <tbody id="soldItemsTable">
+                    <!-- 数据将通过 JavaScript 填充 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section" id="billListSection" style="display: none;">
+        <h2>单据列表</h2>
+        <div class="bill-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bill No</th>
+                        <th>Supervisor</th>
+                        <th>Cashier</th>
+                        <th>支付方式</th>
+                        <th>总金额 (RM)</th>
+                        <th>日期</th>
+                        <th>时间</th>
+                    </tr>
+                </thead>
+                <tbody id="billListTable">
+                    <!-- 数据将通过 JavaScript 填充 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsK-jF0s5losIGNrlxmD83UCzAsXi7gaQ",
+            authDomain: "sales-listing-8d2d7.firebaseapp.com",
+            databaseURL: "https://sales-listing-8d2d7-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sales-listing-8d2d7",
+            storageBucket: "sales-listing-8d2d7.firebasestorage.app",
+            messagingSenderId: "893973257981",
+            appId: "1:893973257981:web:40cfb9612babe692e76894",
+            measurementId: "G-JQ8RWV1S7C"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 获取并显示店铺数据
+        function fetchStoreData() {
+            const selectedStore = document.getElementById('storeSelect').value;
+
+            if (selectedStore === "") {
+                // 清空所有显示的部分
+                document.getElementById("salesSummarySection").style.display = "none";
+                document.getElementById("soldItemsSection").style.display = "none";
+                document.getElementById("billListSection").style.display = "none";
+                return;
+            }
+
+            // 显示各部分
+            document.getElementById("salesSummarySection").style.display = "block";
+            document.getElementById("soldItemsSection").style.display = "block";
+            document.getElementById("billListSection").style.display = "block";
+
+            // Fetch and display sales summary
+            fetchSalesSummary(selectedStore);
+
+            // Fetch and display sold items
+            fetchSoldItems(selectedStore);
+
+            // Fetch and display bill list
+            fetchBillList(selectedStore);
+        }
+
+        // 获取销售摘要
+        function fetchSalesSummary(store) {
+            const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
+
+            salesSummaryRef.once('value', function(snapshot) {
+                const summaryData = snapshot.val() || { cash: 0, card: 0, ewallet: 0 };
+                const tableBody = document.getElementById("salesSummaryTable");
+
+                tableBody.innerHTML = `
+                    <tr>
+                        <td>Cash</td>
+                        <td>${summaryData.cash.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Card</td>
+                        <td>${summaryData.card.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>E-Wallet</td>
+                        <td>${summaryData.ewallet.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Sales</th>
+                        <th>${(summaryData.cash + summaryData.card + summaryData.ewallet).toFixed(2)}</th>
+                    </tr>
+                `;
+            }, function(error) {
+                console.error("Error fetching sales summary: ", error);
+                alert("获取销售摘要时出错。");
+            });
+        }
+
+        // 获取售出物品数据
+        function fetchSoldItems(store) {
+            const soldItemsRef = database.ref(`stores/${store}/soldItems`);
+            soldItemsRef.orderByChild('quantity').once('value', function(snapshot) {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    // 将数据转换为数组并排序
+                    const sortedItems = Object.entries(data).sort((a, b) => b[1].quantity - a[1].quantity);
+                    const tableBody = document.getElementById("soldItemsTable");
+                    tableBody.innerHTML = "";
+
+                    sortedItems.forEach(([itemName, item]) => {
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${itemName.replace(/_/g, ' ')}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.totalPrice.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    document.getElementById("soldItemsTable").innerHTML = "<tr><td colspan='3'>No data available.</td></tr>";
+                }
+            }, function(error) {
+                console.error("Error fetching sold items: ", error);
+                alert("获取售出物品数据时出错。");
+            });
+        }
+
+        // 获取并显示单据列表
+        function fetchBillList(store) {
+            const billListRef = database.ref(`stores/${store}/bills`);
+            billListRef.once('value', function(snapshot) {
+                if (snapshot.exists()) {
+                    const bills = snapshot.val();
+                    const tableBody = document.getElementById("billListTable");
+                    tableBody.innerHTML = "";
+
+                    for (const billKey in bills) {
+                        const bill = bills[billKey];
+                        const date = new Date(bill.date);
+                        const dateString = date.toLocaleDateString();
+                        const timeString = date.toLocaleTimeString();
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${bill.billNumber}</td>
+                                <td>${bill.supervisor}</td>
+                                <td>${bill.cashier}</td>
+                                <td>${bill.paymentMethod}</td>
+                                <td>${bill.total.toFixed(2)}</td>
+                                <td>${dateString}</td>
+                                <td>${timeString}</td>
+                            </tr>
+                        `;
+                    }
+                } else {
+                    document.getElementById("billListTable").innerHTML = "<tr><td colspan='7'>No bills found for this store.</td></tr>";
+                }
+            }, function(error) {
+                console.error("Error fetching bill list: ", error);
+                alert("获取单据列表时出错。");
+            });
+        }
+
+        // 页面加载完成后初始化
+        window.onload = function () {
+            // 你可以在这里预加载一些数据或进行其他初始化操作
+        };
+    </script>
+</body>
+
+</html>
