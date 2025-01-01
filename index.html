@@ -33,7 +33,7 @@
             overflow-y: auto;
             background-color: white;
             position: absolute;
-            width: 100%;
+            width: 170px;
             z-index: 10;
         }
 
@@ -78,26 +78,6 @@
         #productList label {
             flex-grow: 1;
             margin-right: 10px;
-        }
-
-        #suggestions {
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            background-color: white;
-            position: absolute;
-            width: 170px;
-            z-index: 10;
-        }
-
-        #suggestions div {
-            padding: 8px;
-            cursor: pointer;
-            color: #333;
-        }
-
-        #suggestions div:hover {
-            background-color: #f0f0f0;
         }
 
         input[type="number"] {
@@ -237,10 +217,8 @@
             .payment-option span {
                 font-size: 0.8rem;
             }
-        }
 
-        /* 针对小屏幕优化模态框 */
-        @media screen and (max-width: 600px) {
+            /* 针对小屏幕优化模态框 */
             #modalContainer {
                 width: 90%;
                 /* 占满大部分屏幕 */
@@ -255,6 +233,42 @@
                 /* 增加按钮的点击区域 */
             }
         }
+
+        /* 模态框公共样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            color: black;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .modal button {
+            margin-top: 20px;
+            background-color: red;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+        }
+
+        .close-button {
+            background-color: #007bff;
+        }
+
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -266,8 +280,8 @@
     <div class="header">
         <h1>Sales Listing</h1>
     </div>
-    
-    <div class="search-container">
+
+    <div class="search-container" style="position: relative;">
         <input type="text" id="searchBar" placeholder="Search for items..." onfocus="this.value=''"
             onkeyup="searchItems()">
         <div id="suggestions"></div>
@@ -306,9 +320,9 @@
     </div>
 
     <div id="cashInputContainer" style="display: none;">
-        <input type="number" id="cashAmount" placeholder="Enter cash amount" 
-               style="background-color: white; color: black; padding: 5px;"
-               oninput="calculateChange()">
+        <input type="number" id="cashAmount" placeholder="Enter cash amount"
+            style="background-color: white; color: black; padding: 5px;"
+            oninput="calculateChange()">
         <div id="changeAmount" style="color: #e0e0e0; margin-left: 10px; display: inline-block;"></div>
     </div>
 
@@ -344,167 +358,167 @@
         };
 
         // 初始化 Firebase
-       firebase.initializeApp(firebaseConfig);
-		const database = firebase.database();
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-		// 分类商品
-		const categories = {
-			BanHeang: [
-				{ id: 1, name: "Tambun Original", price: 17.90 },
-				{ id: 2, name: "Tambun Pandan", price: 17.90 },
-				{ id: 3, name: "Tambun White Lotus", price: 20.80 },
-				{ id: 4, name: "Tau Sar Pheah", price: 16.80 },
-				{ id: 5, name: "Heong Pheah", price: 16.80 },
-				{ id: 6, name: "Beh Teh Saw", price: 16.80 },
-				{ id: 7, name: "Phong Pheah", price: 16.80 },
-				{ id: 8, name: "Pepper Biscuit", price: 0 },
-				{ id: 9, name: "Hup Toh Soh", price: 16.80 },
-				{ id: 10, name: "Omlette Crisp Chocolate", price: 19.80 },
-				{ id: 11, name: "Omlette Crisp Pandan", price: 19.80 },
-				{ id: 12, name: "Kai Chai Biscuit", price: 14.80 },
-				{ id: 13, name: "Almond Slice", price: 0 },
-				{ id: 14, name: "Almond Slice Salted Egg", price: 0 },
-				{ id: 15, name: "Durian Crisp", price: 17.80 },
-				{ id: 16, name: "Coconut Crisp", price: 17.80 },
-				{ id: 17, name: "Salted Fish Crisp", price: 17.80 },
-				{ id: 18, name: "Salted Egg Crisp", price: 17.80 },
-				{ id: 19, name: "Cheese Crisp", price: 17.80 },
-				{ id: 20, name: "Chic Kut Teh", price: 18 },
-				{ id: 21, name: "Ginger Slice", price: 19.80 },
-				{ id: 26, name: "BH Dried Mango", price: 24.80 },
-				{ id: 27, name: "Kacang Tumbuk", price: 8.90 },
-				{ id: 28, name: "Gula Kacang", price: 8.90 },
-				{ id: 29, name: "Black Sesame Peanut", price: 13.80 },
-				{ id: 30, name: "Shat Kek Ma", price: 21.80 },
-				{ id: 31, name: "Shat Kek Ma (Brown Sugar)", price: 21.80 },
-				{ id: 32, name: "Coconut Biscuits (Beg)", price: 17.80 },
-				{ id: 33, name: "BH Freeze Dried Durian", price: 26.80 },
-				{ id: 34, name: "BH Freeze Dried Mango", price: 26.80 },
-				{ id: 36, name: "Butter Cookies", price: 16.80 },
-				{ id: 37, name: "Chocolate Cookies", price: 16.80 },
-				{ id: 38, name: "Raisin Cookies", price: 16.80 },
-				{ id: 39, name: "Almond Cookies", price: 16.80 },
-				{ id: 40, name: "Pineapple Tart", price: 0 },
-				{ id: 41, name: "Red Bean Mochi", price: 18.70 },
-				{ id: 42, name: "Peanut Mochi", price: 18.70 },
-				{ id: 43, name: "Green Tea Mochi", price: 18.70 },
-				{ id: 44, name: "Durian Mochi", price: 18.70 },
-				{ id: 45, name: "Yam Mochi", price: 18.70 },
-				{ id: 46, name: "Mochi Milk Yam Filling", price: 18.70 },
-				{ id: 47, name: "Mochi Milk Mango Filling", price: 18.70 },
-				{ id: 48, name: "Mochi Milk Green Tea", price: 18.70 },
-				{ id: 52, name: "Fillet Cracker With Anchovy", price: 14.60 },
-				{ id: 53, name: "Fillet Cracker With Seaweed", price: 14.60 },
-				{ id: 54, name: "Sakura Shrimp", price: 14.60 },
-				{ id: 60, name: "Frugurt Yogurt Blueberry", price: 24.80 },
-				{ id: 61, name: "Frugurt Yogurt Peach", price: 24.80 },
-				{ id: 62, name: "Frugurt Yogurt Mango", price: 24.80 },
-				{ id: 63, name: "Durian Pudding", price: 24.80 },
-				{ id: 64, name: "Coconut Pudding", price: 24.80 },
-				{ id: 65, name: "BH Dodol Durian", price: 0 },
-				{ id: 66, name: "BH Dodol Coconut", price: 0 },
-				{ id: 67, name: "BH Dodol Pandan", price: 0 },
-				{ id: 68, name: "Durian Beh Teh Saw", price: 28.90 },
-			],
-			HopHup: [
-				{ id: 70, name: "Musang King Tart", price: 19 },
-				{ id: 71, name: "Mango Tart", price: 19 },
-				{ id: 72, name: "Durian Wafer Roll", price: 23.80 },
-				{ id: 73, name: "Omelette Durian", price: 25.80 },
-				{ id: 76, name: "HT Coconut Ori Cookies", price: 14.80 },
-				{ id: 77, name: "HT Coconut Pandan Cookies", price: 14.80 },
-				{ id: 78, name: "HT Dodol Kopi", price: 21.80 },
-				{ id: 79, name: "HT Dodol Durian", price: 21.80 },
-				{ id: 80, name: "HT Freeze Dried Mango", price: 26.80 },
-				{ id: 81, name: "HT Freeze Dried Durian", price: 26.80 },
-				{ id: 82, name: "Salted Egg Fish Skin", price: 30 },
-				{ id: 83, name: "Salted Egg Fish Skin Spicy", price: 30 },
-				{ id: 84, name: "Salted Egg Salmon Skin", price: 30 },
-				{ id: 94, name: "HT Musang King Durian Candy", price: 21.80 },
-				{ id: 126, name: "HT Dried Fruit Mango ", price: 24.80 }
-			],
-			Chocolate: [
-				{ id: 108, name: "AD Chocolate Durian", unit: 'pc', price: 39 },
-				{ id: 109, name: "AD Chocolate Sabah Tea", unit: 'pc', price: 39 },
-				{ id: 110, name: "AD Chocolate Mango", unit: 'pc', price: 39 },
-				{ id: 111, name: "AD Chocolate Chili", unit: 'pc', price: 39 },
-				{ id: 112, name: "AD Chocolate Dark", unit: 'pc', price: 39 },
-				{ id: 113, name: "AD Chocolate Coffee", unit: 'pc', price: 39 },
-				{ id: 114, name: "AD Chocolate Banana", unit: 'pc', price: 39 },
-				{ id: 115, name: "AD Chocolate Tiramisu", unit: 'pc', price: 39 },
-				{ id: 116, name: "AD Chocolate Mint", unit: 'pc', price: 39 },
-				{ id: 117, name: "AD Chocolate Rambutan", unit: 'pc', price: 39 },
-				{ id: 118, name: "AD Chocolate Soursup", unit: 'pc', price: 39 }
-			],
-			Sotong: [
-				{ id: 85, name: "Cuttlefish Red", price: 21.50 },
-				{ id: 86, name: "Cuttlefish Lemon", price: 21.50 },
-				{ id: 87, name: "Cuttlefish Honey", price: 21.50 },
-				{ id: 88, name: "Cuttlefish Floss Original", price: 21.50 },
-				{ id: 89, name: "Cuttlefish Massive", price: 21.50 },
-				{ id: 90, name: "Cuttlefish Whole", price: 21.50 },
-				{ id: 91, name: "Cuttlefish Roasted", price: 21.50 },
-				{ id: 92, name: "Cuttlefish Chili", price: 21.50 },
-				{ id: 93, name: "Five Star Cuttlefish", price: 34.00 },
-				{ id: 49, name: "BH Sotong Cuttlefish", price: 14.60 },
-				{ id: 50, name: "BH Gula Cuttlefish", price: 14.60 },
-				{ id: 51, name: "BH Satay Fish", price: 14.60 }
-			],
-			Coffee: [
-				{ id: 22, name: "BH W/Coffee(Mini)", price: 25.80 },
-				{ id: 23, name: "BH W/Coffee(Mini)No Sugar", price: 25.80 },
-				{ id: 25, name: "BH Durian W/Coffee(Mini)", price: 25.80 },
-				{ id: 24, name: "BH Teh Tarik(Mini)", price: 25.80 },
-				{ id: 55, name: "BH W/Coffee", price: 29.50 },
-				{ id: 119, name: "BH W/Coffee No Sugar", price: 29.50 },
-				{ id: 58, name: "BH Teh Tarik", price: 29.50 },
-				{ id: 59, name: "BH Durian White Coffee", price: 29.50 },
-				{ id: 99, name: "Kopi Tenom Silver", price: 11.70 },
-				{ id: 100, name: "Kopi Tenom Gold", price: 12.70 },
-				{ id: 101, name: "Kopi Tenom Blue", price: 14.80 },
-				{ id: 102, name: "Kopi Tenom Green", price: 14.30 },
-				{ id: 125, name: "Kopi Tenom Red ", price: 15.60 }
-			],
-			Amplang: [
-				{ id: 96, name: "Amplang Ikan", price: 12 },
-				{ id: 97, name: "Amplang Udang", price: 12 },
-				{ id: 98, name: "Amplang Sotong", price: 12 },
-				{ id: 143, name: "kuih Cincin", price: 12 },
-				{ id: 144, name: "Kuih Cincin (Mini)", price: 18 }
+        // 分类商品
+        const categories = {
+            BanHeang: [
+                { id: 1, name: "Tambun Original", price: 17.90 },
+                { id: 2, name: "Tambun Pandan", price: 17.90 },
+                { id: 3, name: "Tambun White Lotus", price: 20.80 },
+                { id: 4, name: "Tau Sar Pheah", price: 16.80 },
+                { id: 5, name: "Heong Pheah", price: 16.80 },
+                { id: 6, name: "Beh Teh Saw", price: 16.80 },
+                { id: 7, name: "Phong Pheah", price: 16.80 },
+                { id: 8, name: "Pepper Biscuit", price: 0 },
+                { id: 9, name: "Hup Toh Soh", price: 16.80 },
+                { id: 10, name: "Omlette Crisp Chocolate", price: 19.80 },
+                { id: 11, name: "Omlette Crisp Pandan", price: 19.80 },
+                { id: 12, name: "Kai Chai Biscuit", price: 14.80 },
+                { id: 13, name: "Almond Slice", price: 0 },
+                { id: 14, name: "Almond Slice Salted Egg", price: 0 },
+                { id: 15, name: "Durian Crisp", price: 17.80 },
+                { id: 16, name: "Coconut Crisp", price: 17.80 },
+                { id: 17, name: "Salted Fish Crisp", price: 17.80 },
+                { id: 18, name: "Salted Egg Crisp", price: 17.80 },
+                { id: 19, name: "Cheese Crisp", price: 17.80 },
+                { id: 20, name: "Chic Kut Teh", price: 18 },
+                { id: 21, name: "Ginger Slice", price: 19.80 },
+                { id: 26, name: "BH Dried Mango", price: 24.80 },
+                { id: 27, name: "Kacang Tumbuk", price: 8.90 },
+                { id: 28, name: "Gula Kacang", price: 8.90 },
+                { id: 29, name: "Black Sesame Peanut", price: 13.80 },
+                { id: 30, name: "Shat Kek Ma", price: 21.80 },
+                { id: 31, name: "Shat Kek Ma (Brown Sugar)", price: 21.80 },
+                { id: 32, name: "Coconut Biscuits (Beg)", price: 17.80 },
+                { id: 33, name: "BH Freeze Dried Durian", price: 26.80 },
+                { id: 34, name: "BH Freeze Dried Mango", price: 26.80 },
+                { id: 36, name: "Butter Cookies", price: 16.80 },
+                { id: 37, name: "Chocolate Cookies", price: 16.80 },
+                { id: 38, name: "Raisin Cookies", price: 16.80 },
+                { id: 39, name: "Almond Cookies", price: 16.80 },
+                { id: 40, name: "Pineapple Tart", price: 0 },
+                { id: 41, name: "Red Bean Mochi", price: 18.70 },
+                { id: 42, name: "Peanut Mochi", price: 18.70 },
+                { id: 43, name: "Green Tea Mochi", price: 18.70 },
+                { id: 44, name: "Durian Mochi", price: 18.70 },
+                { id: 45, name: "Yam Mochi", price: 18.70 },
+                { id: 46, name: "Mochi Milk Yam Filling", price: 18.70 },
+                { id: 47, name: "Mochi Milk Mango Filling", price: 18.70 },
+                { id: 48, name: "Mochi Milk Green Tea", price: 18.70 },
+                { id: 52, name: "Fillet Cracker With Anchovy", price: 14.60 },
+                { id: 53, name: "Fillet Cracker With Seaweed", price: 14.60 },
+                { id: 54, name: "Sakura Shrimp", price: 14.60 },
+                { id: 60, name: "Frugurt Yogurt Blueberry", price: 24.80 },
+                { id: 61, name: "Frugurt Yogurt Peach", price: 24.80 },
+                { id: 62, name: "Frugurt Yogurt Mango", price: 24.80 },
+                { id: 63, name: "Durian Pudding", price: 24.80 },
+                { id: 64, name: "Coconut Pudding", price: 24.80 },
+                { id: 65, name: "BH Dodol Durian", price: 0 },
+                { id: 66, name: "BH Dodol Coconut", price: 0 },
+                { id: 67, name: "BH Dodol Pandan", price: 0 },
+                { id: 68, name: "Durian Beh Teh Saw", price: 28.90 },
+            ],
+            HopHup: [
+                { id: 70, name: "Musang King Tart", price: 19 },
+                { id: 71, name: "Mango Tart", price: 19 },
+                { id: 72, name: "Durian Wafer Roll", price: 23.80 },
+                { id: 73, name: "Omelette Durian", price: 25.80 },
+                { id: 76, name: "HT Coconut Ori Cookies", price: 14.80 },
+                { id: 77, name: "HT Coconut Pandan Cookies", price: 14.80 },
+                { id: 78, name: "HT Dodol Kopi", price: 21.80 },
+                { id: 79, name: "HT Dodol Durian", price: 21.80 },
+                { id: 80, name: "HT Freeze Dried Mango", price: 26.80 },
+                { id: 81, name: "HT Freeze Dried Durian", price: 26.80 },
+                { id: 82, name: "Salted Egg Fish Skin", price: 30 },
+                { id: 83, name: "Salted Egg Fish Skin Spicy", price: 30 },
+                { id: 84, name: "Salted Egg Salmon Skin", price: 30 },
+                { id: 94, name: "HT Musang King Durian Candy", price: 21.80 },
+                { id: 126, name: "HT Dried Fruit Mango ", price: 24.80 }
+            ],
+            Chocolate: [
+                { id: 108, name: "AD Chocolate Durian", unit: 'pc', price: 39 },
+                { id: 109, name: "AD Chocolate Sabah Tea", unit: 'pc', price: 39 },
+                { id: 110, name: "AD Chocolate Mango", unit: 'pc', price: 39 },
+                { id: 111, name: "AD Chocolate Chili", unit: 'pc', price: 39 },
+                { id: 112, name: "AD Chocolate Dark", unit: 'pc', price: 39 },
+                { id: 113, name: "AD Chocolate Coffee", unit: 'pc', price: 39 },
+                { id: 114, name: "AD Chocolate Banana", unit: 'pc', price: 39 },
+                { id: 115, name: "AD Chocolate Tiramisu", unit: 'pc', price: 39 },
+                { id: 116, name: "AD Chocolate Mint", unit: 'pc', price: 39 },
+                { id: 117, name: "AD Chocolate Rambutan", unit: 'pc', price: 39 },
+                { id: 118, name: "AD Chocolate Soursup", unit: 'pc', price: 39 }
+            ],
+            Sotong: [
+                { id: 85, name: "Cuttlefish Red", price: 21.50 },
+                { id: 86, name: "Cuttlefish Lemon", price: 21.50 },
+                { id: 87, name: "Cuttlefish Honey", price: 21.50 },
+                { id: 88, name: "Cuttlefish Floss Original", price: 21.50 },
+                { id: 89, name: "Cuttlefish Massive", price: 21.50 },
+                { id: 90, name: "Cuttlefish Whole", price: 21.50 },
+                { id: 91, name: "Cuttlefish Roasted", price: 21.50 },
+                { id: 92, name: "Cuttlefish Chili", price: 21.50 },
+                { id: 93, name: "Five Star Cuttlefish", price: 34.00 },
+                { id: 49, name: "BH Sotong Cuttlefish", price: 14.60 },
+                { id: 50, name: "BH Gula Cuttlefish", price: 14.60 },
+                { id: 51, name: "BH Satay Fish", price: 14.60 }
+            ],
+            Coffee: [
+                { id: 22, name: "BH W/Coffee(Mini)", price: 25.80 },
+                { id: 23, name: "BH W/Coffee(Mini)No Sugar", price: 25.80 },
+                { id: 25, name: "BH Durian W/Coffee(Mini)", price: 25.80 },
+                { id: 24, name: "BH Teh Tarik(Mini)", price: 25.80 },
+                { id: 55, name: "BH W/Coffee", price: 29.50 },
+                { id: 119, name: "BH W/Coffee No Sugar", price: 29.50 },
+                { id: 58, name: "BH Teh Tarik", price: 29.50 },
+                { id: 59, name: "BH Durian White Coffee", price: 29.50 },
+                { id: 99, name: "Kopi Tenom Silver", price: 11.70 },
+                { id: 100, name: "Kopi Tenom Gold", price: 12.70 },
+                { id: 101, name: "Kopi Tenom Blue", price: 14.80 },
+                { id: 102, name: "Kopi Tenom Green", price: 14.30 },
+                { id: 125, name: "Kopi Tenom Red ", price: 15.60 }
+            ],
+            Amplang: [
+                { id: 96, name: "Amplang Ikan", price: 12 },
+                { id: 97, name: "Amplang Udang", price: 12 },
+                { id: 98, name: "Amplang Sotong", price: 12 },
+                { id: 143, name: "kuih Cincin", price: 12 },
+                { id: 144, name: "Kuih Cincin (Mini)", price: 18 }
 
-			],
-			SabahTea: [
-				{ id: 127, name: "Sabah Tea (S)", price: 7.50 },
-				{ id: 128, name: "Sabah Tea (B)", price: 14 },
-				{ id: 129, name: "Sabah Tea Box", price: 40 },
-				{ id: 130, name: "Sabah Tea Gift Box", price: 96 },
-				{ id: 131, name: "Sabah Tea Agarwood", price: 15.80 },
-				{ id: 132, name: "Sabah Tea Cinnamon", price: 15.80 },
-				{ id: 133, name: "Sabah Tea Ginger", price: 15.80 },
-				{ id: 134, name: "Sabah Tea Misai Kuching", price: 15.80 },
-				{ id: 135, name: "Sabah Tea Tongat Ali", price: 15.80 },
-				{ id: 136, name: "Sabah Tea Geranium", price: 15.80 },
-				{ id: 137, name: "Sabah Tea Lemon Grass", price: 15.80 },
-				{ id: 138, name: "Sabah Tea Pandan", price: 15.80 },
-				{ id: 139, name: "Sabah Tea Geranium", price: 15.80 },
-				{ id: 140, name: "Sabah Tea Organic", price: 20 },
-				{ id: 141, name: "Sabah Tea Wooden box (B)", price: 65 },
-				{ id: 142, name: "Sabah Tea Wooden box (S)", price: 47.70 },
+            ],
+            SabahTea: [
+                { id: 127, name: "Sabah Tea (S)", price: 7.50 },
+                { id: 128, name: "Sabah Tea (B)", price: 14 },
+                { id: 129, name: "Sabah Tea Box", price: 40 },
+                { id: 130, name: "Sabah Tea Gift Box", price: 96 },
+                { id: 131, name: "Sabah Tea Agarwood", price: 15.80 },
+                { id: 132, name: "Sabah Tea Cinnamon", price: 15.80 },
+                { id: 133, name: "Sabah Tea Ginger", price: 15.80 },
+                { id: 134, name: "Sabah Tea Misai Kuching", price: 15.80 },
+                { id: 135, name: "Sabah Tea Tongat Ali", price: 15.80 },
+                { id: 136, name: "Sabah Tea Geranium", price: 15.80 },
+                { id: 137, name: "Sabah Tea Lemon Grass", price: 15.80 },
+                { id: 138, name: "Sabah Tea Pandan", price: 15.80 },
+                { id: 139, name: "Sabah Tea Geranium", price: 15.80 },
+                { id: 140, name: "Sabah Tea Organic", price: 20 },
+                { id: 141, name: "Sabah Tea Wooden box (B)", price: 65 },
+                { id: 142, name: "Sabah Tea Wooden box (S)", price: 47.70 },
 
-			],
-			Other: [
-				{ id: 106, name: "Fruity Gummy Assorted", price: 8.50 },
-				{ id: 124, name: "Fruity Gummy Mango", price: 8.50 },
-				{ id: 69, name: "Durian Kuih", price: 33 },
-				{ id: 120, name: "Anchovy Blue", price: 28.80 },
-				{ id: 121, name: "Anchovy Green", price: 28.80 },
-				{ id: 122, name: "Anchovy Red", price: 19.80 },
-				{ id: 123, name: "Anchovy Yellow", price: 19.80 },
-				{ id: 145, name: "Bird Nest", price: 0, customPrice: true },
-				{ id: 146, name: "Fish Maw", price: 0, customPrice: true },
-				{ id: 147, name: "Sea Cucumber", price: 0, customPrice: true }
-			]
-		};
+            ],
+            Other: [
+                { id: 106, name: "Fruity Gummy Assorted", price: 8.50 },
+                { id: 124, name: "Fruity Gummy Mango", price: 8.50 },
+                { id: 69, name: "Durian Kuih", price: 33 },
+                { id: 120, name: "Anchovy Blue", price: 28.80 },
+                { id: 121, name: "Anchovy Green", price: 28.80 },
+                { id: 122, name: "Anchovy Red", price: 19.80 },
+                { id: 123, name: "Anchovy Yellow", price: 19.80 },
+                { id: 145, name: "Bird Nest", price: 0, customPrice: true },
+                { id: 146, name: "Fish Maw", price: 0, customPrice: true },
+                { id: 147, name: "Sea Cucumber", price: 0, customPrice: true }
+            ]
+        };
         let selectedItems = {};
         let billNumber = 1; // 单据编号
         let selectedStore = ""; // 保存选中的店铺名称
@@ -592,7 +606,7 @@
                                    style="width: 100px; padding: 5px; background-color: white; color: black;"
                                    step="0.10">
                             <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
-                            <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
+                            <span onclick="removeItem('${product.id}-custom')" style="cursor: pointer;">❌</span>
                         </div>
                     `;
                 } else {
@@ -611,19 +625,14 @@
             });
         }
 
-        function removeItem(id) {
-            const checkbox = document.getElementById('item' + id);
+        function removeItem(uniqueId) {
+            const checkbox = document.getElementById('item' + uniqueId);
             if (checkbox) {
                 checkbox.checked = false;
                 checkbox.onchange(); // 触发保存操作，移除商品
             } else {
                 // 如果是自定义商品，直接从 selectedItems 中删除
-                for (const uniqueId in selectedItems) {
-                    if (uniqueId.startsWith(`${id}-`)) {
-                        delete selectedItems[uniqueId];
-                        break;
-                    }
-                }
+                delete selectedItems[uniqueId];
             }
             updateResult();
         }
@@ -866,7 +875,7 @@
             }
 
             // 生成唯一的 ID，避免重复
-            const uniqueId = `${id}-${Date.now()}`;
+            const uniqueId = `${id}-custom-${Date.now()}`;
 
             // 添加到 selectedItems，确保每次都是新记录
             selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
@@ -879,6 +888,9 @@
             successMessage.style.color = 'green';
             document.body.appendChild(successMessage);
             setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
+
+            // 清空价格输入框
+            priceInput.value = '';
         }
 
         function saveBill() {
@@ -902,7 +914,7 @@
             };
 
             // 将单据存储到 Realtime Database 的 "stores/{store}/bills/{billNumber}" 节点中
-            database.ref(`stores/${selectedStore}/bills/${formattedBillNumber}`).set(billData, function(error) {
+            database.ref(`stores/${selectedStore}/bills/${formattedBillNumber}`).set(billData, function (error) {
                 if (error) {
                     console.error("Error saving bill: ", error);
                     alert("保存单据时出错，请稍后重试。");
@@ -915,7 +927,7 @@
                     updateCurrentBillDisplay();
 
                     alert(`Bill ${formattedBillNumber} saved successfully!`);
-                    
+
                     // Clear selections for next customer
                     selectedItems = {};
                     document.getElementById("productList").innerHTML = "";
@@ -935,7 +947,7 @@
 
             // Update salesSummary for the specific store
             const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
-            salesSummaryRef.once('value', function(snapshot) {
+            salesSummaryRef.once('value', function (snapshot) {
                 let currentData = snapshot.val();
                 if (!currentData) {
                     currentData = { cash: 0, card: 0, ewallet: 0 };
@@ -950,14 +962,14 @@
                 }
 
                 // Save updated salesSummary back to database
-                salesSummaryRef.set(currentData, function(error) {
+                salesSummaryRef.set(currentData, function (error) {
                     if (error) {
                         console.error("Error updating sales summary: ", error);
                     } else {
                         console.log("Sales summary updated successfully.");
                     }
                 });
-            }, function(error) {
+            }, function (error) {
                 console.error("Error fetching sales summary: ", error);
             });
 
@@ -967,7 +979,7 @@
                 const item = billData.items[itemId];
                 const itemNameKey = item.name.replace(/\s+/g, '_'); // Use underscore instead of spaces
 
-                soldItemsRef.child(itemNameKey).once('value', function(snapshot) {
+                soldItemsRef.child(itemNameKey).once('value', function (snapshot) {
                     let currentItemData = snapshot.val();
                     if (!currentItemData) {
                         currentItemData = { quantity: 0, totalPrice: 0 };
@@ -977,14 +989,14 @@
                     currentItemData.totalPrice += item.quantity * item.price;
 
                     // Save updated item data back to database
-                    soldItemsRef.child(itemNameKey).set(currentItemData, function(error) {
+                    soldItemsRef.child(itemNameKey).set(currentItemData, function (error) {
                         if (error) {
                             console.error(`Error updating sold item ${item.name}: `, error);
                         } else {
                             console.log(`Sold item ${item.name} updated successfully.`);
                         }
                     });
-                }, function(error) {
+                }, function (error) {
                     console.error(`Error fetching sold item ${item.name}: `, error);
                 });
             }
@@ -1003,7 +1015,7 @@
                 return;
             }
 
-            database.ref(`stores/${selectedStore}/bills/${billKey}`).once('value', function(snapshot) {
+            database.ref(`stores/${selectedStore}/bills/${billKey}`).once('value', function (snapshot) {
                 if (snapshot.exists()) {
                     const billData = snapshot.val();
                     const billText = `
@@ -1025,7 +1037,7 @@ Time: ${new Date(billData.date).toLocaleTimeString()}
                 } else {
                     alert(`Bill ${billInput} not found.`);
                 }
-            }, function(error) {
+            }, function (error) {
                 console.error("Error fetching bill: ", error);
                 alert("查询单据时出错，请稍后重试。");
             });
@@ -1035,21 +1047,7 @@ Time: ${new Date(billData.date).toLocaleTimeString()}
             // 创建一个模态框
             const modal = document.createElement("div");
             modal.id = "modalContainer";
-            
-            modal.style.position = "fixed";
-            modal.style.top = "50%";
-            modal.style.left = "50%";
-            modal.style.transform = "translate(-50%, -50%)";
-            modal.style.backgroundColor = "white";
-            modal.style.color = "black";
-            modal.style.padding = "20px";
-            modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-            modal.style.borderRadius = "8px";
-            modal.style.zIndex = "1000";
-            modal.style.width = "90%"; // 宽度适配手机
-            modal.style.maxWidth = "400px"; // 最大宽度
-            modal.style.maxHeight = "80%"; // 最大高度
-            modal.style.overflowY = "auto"; // 内容溢出时滚动
+            modal.classList.add("modal");
 
             // 添加单据内容
             const content = document.createElement("pre");
@@ -1081,7 +1079,7 @@ Time: ${new Date(billData.date).toLocaleTimeString()}
                     return;
                 }
                 const prevBillKey = prevBillNumber.toString().padStart(3, "0");
-                database.ref(`stores/${selectedStore}/bills/${prevBillKey}`).once('value', function(prevSnapshot) {
+                database.ref(`stores/${selectedStore}/bills/${prevBillKey}`).once('value', function (prevSnapshot) {
                     if (prevSnapshot.exists()) {
                         document.body.removeChild(modal); // 关闭当前模态框
                         const prevBillData = prevSnapshot.val();
@@ -1104,7 +1102,7 @@ Time: ${new Date(prevBillData.date).toLocaleTimeString()}
                     } else {
                         alert("No previous bill found.");
                     }
-                }, function(error) {
+                }, function (error) {
                     console.error("Error fetching previous bill: ", error);
                     alert("查询前一张单据时出错。");
                 });
@@ -1123,7 +1121,7 @@ Time: ${new Date(prevBillData.date).toLocaleTimeString()}
             nextButton.onclick = function () {
                 const nextBillNumber = parseInt(currentBill) + 1;
                 const nextBillKey = nextBillNumber.toString().padStart(3, "0");
-                database.ref(`stores/${selectedStore}/bills/${nextBillKey}`).once('value', function(nextSnapshot) {
+                database.ref(`stores/${selectedStore}/bills/${nextBillKey}`).once('value', function (nextSnapshot) {
                     if (nextSnapshot.exists()) {
                         document.body.removeChild(modal); // 关闭当前模态框
                         const nextBillData = nextSnapshot.val();
@@ -1146,7 +1144,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
                     } else {
                         alert("No next bill found.");
                     }
-                }, function(error) {
+                }, function (error) {
                     console.error("Error fetching next bill: ", error);
                     alert("查询后一张单据时出错。");
                 });
@@ -1158,15 +1156,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
             // 添加关闭按钮
             const closeButton = document.createElement("button");
             closeButton.textContent = "Close";
-            closeButton.style.marginTop = "20px";
-            closeButton.style.backgroundColor = "red";
-            closeButton.style.color = "white";
-            closeButton.style.padding = "10px";
-            closeButton.style.border = "none";
-            closeButton.style.borderRadius = "5px";
-            closeButton.style.cursor = "pointer";
-            closeButton.style.display = "block"; // 独占一行
-            closeButton.style.margin = "10px auto 0"; // 居中
+            closeButton.classList.add("close-button");
             closeButton.onclick = function () {
                 document.body.removeChild(modal);
             };
@@ -1175,6 +1165,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
 
             // 添加模态框到 body
             document.body.appendChild(modal);
+            modal.style.display = "block";
         }
 
         function deleteBill() {
@@ -1191,23 +1182,110 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
                 return;
             }
 
-            database.ref(`stores/${selectedStore}/bills/${billKey}`).once('value', function(snapshot) {
+            const billRef = database.ref(`stores/${selectedStore}/bills/${billKey}`);
+
+            billRef.once('value', function (snapshot) {
                 if (snapshot.exists()) {
+                    const billData = snapshot.val();
+
                     const confirmDelete = confirm(`Are you sure you want to delete bill ${billInput}?`);
                     if (confirmDelete) {
-                        database.ref(`stores/${selectedStore}/bills/${billKey}`).remove(function(error) {
-                            if (error) {
-                                console.error("Error deleting bill: ", error);
-                                alert("删除单据时出错，请稍后重试。");
-                            } else {
-                                alert(`Bill ${billInput} deleted successfully.`);
+                        // 先更新 salesSummary 和 soldItems
+                        const paymentMethod = billData.paymentMethod;
+                        const total = billData.total;
+                        const items = billData.items;
+
+                        // 更新 salesSummary
+                        const salesSummaryRef = database.ref(`stores/${selectedStore}/salesSummary`);
+                        salesSummaryRef.once('value', function (summarySnapshot) {
+                            let summaryData = summarySnapshot.val();
+                            if (!summaryData) {
+                                summaryData = { cash: 0, card: 0, ewallet: 0 };
                             }
+
+                            if (paymentMethod === "Cash") {
+                                summaryData.cash -= total;
+                                if (summaryData.cash < 0) summaryData.cash = 0; // 防止负数
+                            } else if (paymentMethod === "Card") {
+                                summaryData.card -= total;
+                                if (summaryData.card < 0) summaryData.card = 0;
+                            } else if (paymentMethod === "E-Wallet") {
+                                summaryData.ewallet -= total;
+                                if (summaryData.ewallet < 0) summaryData.ewallet = 0;
+                            }
+
+                            // 更新 salesSummary
+                            salesSummaryRef.set(summaryData, function (error) {
+                                if (error) {
+                                    console.error("Error updating sales summary: ", error);
+                                    alert("删除单据时更新销售摘要出错，请稍后重试。");
+                                    return;
+                                }
+
+                                // 更新 soldItems
+                                const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
+                                const updateSoldItemsPromises = [];
+
+                                for (const itemId in items) {
+                                    const item = items[itemId];
+                                    const itemNameKey = item.name.replace(/\s+/g, '_'); // 用下划线替代空格
+
+                                    const itemRef = soldItemsRef.child(itemNameKey);
+                                    const promise = itemRef.once('value').then(function (itemSnapshot) {
+                                        if (itemSnapshot.exists()) {
+                                            const currentItemData = itemSnapshot.val();
+                                            currentItemData.quantity -= item.quantity;
+                                            currentItemData.totalPrice -= item.quantity * item.price;
+
+                                            // 确保不会出现负数
+                                            if (currentItemData.quantity < 0) currentItemData.quantity = 0;
+                                            if (currentItemData.totalPrice < 0) currentItemData.totalPrice = 0;
+
+                                            // 如果商品数量和总价都为零，则删除该商品记录
+                                            if (currentItemData.quantity === 0 && currentItemData.totalPrice === 0) {
+                                                return itemRef.remove();
+                                            } else {
+                                                return itemRef.set(currentItemData);
+                                            }
+                                        }
+                                    }).catch(function (error) {
+                                        console.error(`Error updating sold item ${item.name}: `, error);
+                                    });
+
+                                    updateSoldItemsPromises.push(promise);
+                                }
+
+                                // 等待所有 soldItems 更新完成
+                                Promise.all(updateSoldItemsPromises).then(function () {
+                                    // 最后删除单据
+                                    billRef.remove(function (error) {
+                                        if (error) {
+                                            console.error("Error deleting bill: ", error);
+                                            alert("删除单据时出错，请稍后重试。");
+                                        } else {
+                                            alert(`Bill ${billInput} deleted successfully.`);
+
+                                            // 如果当前显示的单据是被删除的单据，可以清除显示
+                                            document.getElementById("result").innerText = "";
+                                            document.getElementById("productList").innerHTML = "";
+                                            selectedItems = {};
+                                            togglePaymentMethod(false);
+                                            hideCashInput();
+                                            toggleItems();
+                                            updateCurrentBillDisplay(); // 可选：更新当前单据显示
+                                        }
+                                    });
+                                });
+                            });
+                        }, function (error) {
+                            console.error("Error fetching sales summary: ", error);
+                            alert("删除单据时获取销售摘要出错，请稍后重试。");
                         });
                     }
                 } else {
                     alert(`Bill ${billInput} not found.`);
                 }
-            }, function(error) {
+            }, function (error) {
                 console.error("Error fetching bill: ", error);
                 alert("查询单据时出错，请稍后重试。");
             });
@@ -1232,33 +1310,19 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
             const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
 
             // Fetch sales summary
-            salesSummaryRef.once('value', function(summarySnapshot) {
+            salesSummaryRef.once('value', function (summarySnapshot) {
                 const summaryData = summarySnapshot.val() || { cash: 0, card: 0, ewallet: 0 };
                 const totalSales = summaryData.cash + summaryData.card + summaryData.ewallet;
 
                 // Fetch sold items
-                soldItemsRef.orderByChild('quantity').once('value', function(itemsSnapshot) {
+                soldItemsRef.orderByChild('quantity').once('value', function (itemsSnapshot) {
                     const itemsData = itemsSnapshot.val() || {};
                     // Convert to array and sort by quantity descending
                     const sortedItems = Object.entries(itemsData).sort((a, b) => b[1].quantity - a[1].quantity);
 
                     // Create modal content
                     const modal = document.createElement("div");
-                    
-                    modal.style.position = "fixed";
-                    modal.style.top = "50%";
-                    modal.style.left = "50%";
-                    modal.style.transform = "translate(-50%, -50%)";
-                    modal.style.backgroundColor = "white";
-                    modal.style.color = "black";
-                    modal.style.padding = "20px";
-                    modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-                    modal.style.borderRadius = "8px";
-                    modal.style.zIndex = "1000";
-                    modal.style.width = "90%"; // 宽度适配手机
-                    modal.style.maxWidth = "400px"; // 最大宽度
-                    modal.style.maxHeight = "80%"; // 最大高度
-                    modal.style.overflowY = "auto"; // 内容溢出时滚动
+                    modal.classList.add("modal");
 
                     const content = document.createElement("div");
                     content.style.color = "black";
@@ -1286,15 +1350,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
                     // 添加关闭按钮
                     const closeButton = document.createElement("button");
                     closeButton.textContent = "Close";
-                    closeButton.style.marginTop = "20px";
-                    closeButton.style.backgroundColor = "red";
-                    closeButton.style.color = "white";
-                    closeButton.style.padding = "10px";
-                    closeButton.style.border = "none";
-                    closeButton.style.borderRadius = "5px";
-                    closeButton.style.cursor = "pointer";
-                    closeButton.style.display = "block"; // 独占一行
-                    closeButton.style.margin = "10px auto 0"; // 居中
+                    closeButton.classList.add("close-button");
                     closeButton.onclick = function () {
                         document.body.removeChild(modal);
                     };
@@ -1302,11 +1358,12 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
 
                     // 添加模态框到 body
                     document.body.appendChild(modal);
-                }, function(error) {
+                    modal.style.display = "block";
+                }, function (error) {
                     console.error("Error fetching sold items: ", error);
                     alert("获取售出物品数据时出错。");
                 });
-            }, function(error) {
+            }, function (error) {
                 console.error("Error fetching sales summary: ", error);
                 alert("获取销售摘要数据时出错。");
             });
@@ -1315,7 +1372,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
     <p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
 
     <!-- Supervisor 和 Cashier 输入模态框 -->
-    <div id="supervisorModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border-radius: 10px; padding: 20px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+    <div id="supervisorModal" class="modal">
         <h3 style="text-align: center; color: black;">Enter Supervisor and Cashier</h3>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;">
             <input id="supervisorInput" type="text" placeholder="Supervisor Name" style="width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;">
@@ -1325,7 +1382,7 @@ Time: ${new Date(nextBillData.date).toLocaleTimeString()}
     </div>
 
     <!-- 店铺选择模态框 -->
-    <div id="storeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; border-radius: 10px; padding: 20px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+    <div id="storeModal" class="modal">
         <h3 style="text-align: center; color: black;">Select Store</h3>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;">
             <button onclick="selectStore('JKL')" style="width: 200px; height: 50px; font-size: 16px; background-color: black; color: white; border: none; border-radius: 5px; cursor: pointer;">JKL</button>
