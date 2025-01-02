@@ -2,10 +2,12 @@
 <html lang="zh">
 
 <head>
+    <!-- 您现有的 head 内容保持不变 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cashier Tools</title>
     <style>
+        /* 您现有的 CSS 样式保持不变 */
         body {
             font-family: Arial, sans-serif;
             padding: 15px;
@@ -273,6 +275,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 
 <body>
@@ -344,685 +347,581 @@
         <button onclick="showSalesClosing()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Sales Closing</button>
     </div>
 
-    <script>
-        // Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyCsK-jF0s5losIGNrlxmD83UCzAsXi7gaQ",
-            authDomain: "sales-listing-8d2d7.firebaseapp.com",
-            databaseURL: "https://sales-listing-8d2d7-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sales-listing-8d2d7",
-            storageBucket: "sales-listing-8d2d7.firebasestorage.app",
-            messagingSenderId: "893973257981",
-            appId: "1:893973257981:web:40cfb9612babe692e76894",
-            measurementId: "G-JQ8RWV1S7C"
-        };
+<script>
+    // Firebase 配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsK-jF0s5losIGNrlxmD83UCzAsXi7gaQ",
+        authDomain: "sales-listing-8d2d7.firebaseapp.com",
+        databaseURL: "https://sales-listing-8d2d7-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sales-listing-8d2d7",
+        storageBucket: "sales-listing-8d2d7.firebasestorage.app",
+        messagingSenderId: "893973257981",
+        appId: "1:893973257981:web:40cfb9612babe692e76894",
+        measurementId: "G-JQ8RWV1S7C"
+    };
 
-        // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
 
-        // 分类商品
-       const categories = {
-    BanHeang: [
-        { id: 101, name: "Tambun Original", price: 17.90 },
-        { id: 102, name: "Tambun Pandan", price: 17.90 },
-        { id: 103, name: "Tambun White Lotus", price: 20.80 },
-        { id: 104, name: "Tau Sar Pheah", price: 16.80 },
-        { id: 105, name: "Heong Pheah", price: 16.80 },
-        { id: 106, name: "Beh Teh Saw", price: 16.80 },
-        { id: 107, name: "Phong Pheah", price: 16.80 },
-        { id: 108, name: "Pepper Biscuit", price: 0 },
-        { id: 109, name: "Hup Toh Soh", price: 16.80 },
-        { id: 110, name: "Omlette Crisp Chocolate", price: 19.80 },
-        { id: 111, name: "Omlette Crisp Pandan", price: 19.80 },
-        { id: 112, name: "Kai Chai Biscuit", price: 14.80 },
-        { id: 113, name: "Almond Slice", price: 0 },
-        { id: 114, name: "Almond Slice Salted Egg", price: 0 },
-        { id: 115, name: "Durian Crisp", price: 17.80 },
-        { id: 116, name: "Coconut Crisp", price: 17.80 },
-        { id: 117, name: "Salted Fish Crisp", price: 17.80 },
-        { id: 118, name: "Salted Egg Crisp", price: 17.80 },
-        { id: 119, name: "Cheese Crisp", price: 17.80 },
-        { id: 120, name: "Chic Kut Teh", price: 18 },
-        { id: 121, name: "Ginger Slice", price: 19.80 },
-        { id: 122, name: "BH Dried Mango", price: 24.80 },
-        { id: 123, name: "Kacang Tumbuk", price: 8.90 },
-        { id: 124, name: "Gula Kacang", price: 8.90 },
-        { id: 125, name: "Black Sesame Peanut", price: 13.80 },
-        { id: 126, name: "Shat Kek Ma", price: 21.80 },
-        { id: 127, name: "Shat Kek Ma (Brown Sugar)", price: 21.80 },
-        { id: 128, name: "Coconut Biscuits (Beg)", price: 17.80 },
-        { id: 129, name: "BH Freeze Dried Durian", price: 26.80 },
-        { id: 130, name: "BH Freeze Dried Mango", price: 26.80 },
-        { id: 131, name: "Butter Cookies", price: 16.80 },
-        { id: 132, name: "Chocolate Cookies", price: 16.80 },
-        { id: 133, name: "Raisin Cookies", price: 16.80 },
-        { id: 134, name: "Almond Cookies", price: 16.80 },
-        { id: 135, name: "Pineapple Tart", price: 0 },
-        { id: 136, name: "Red Bean Mochi", price: 18.70 },
-        { id: 137, name: "Peanut Mochi", price: 18.70 },
-        { id: 138, name: "Green Tea Mochi", price: 18.70 },
-        { id: 139, name: "Durian Mochi", price: 18.70 },
-        { id: 140, name: "Yam Mochi", price: 18.70 },
-        { id: 141, name: "Mochi Milk Yam Filling", price: 18.70 },
-        { id: 142, name: "Mochi Milk Mango Filling", price: 18.70 },
-        { id: 143, name: "Mochi Milk Green Tea", price: 18.70 },
-        { id: 144, name: "Fillet Cracker With Anchovy", price: 14.60 },
-        { id: 145, name: "Fillet Cracker With Seaweed", price: 14.60 },
-        { id: 146, name: "Sakura Shrimp", price: 14.60 },
-        { id: 147, name: "Frugurt Yogurt Blueberry", price: 24.80 },
-        { id: 148, name: "Frugurt Yogurt Peach", price: 24.80 },
-        { id: 149, name: "Frugurt Yogurt Mango", price: 24.80 },
-        { id: 150, name: "Durian Pudding", price: 24.80 },
-        { id: 151, name: "Coconut Pudding", price: 24.80 },
-        { id: 152, name: "BH Dodol Durian", price: 0 },
-        { id: 153, name: "BH Dodol Coconut", price: 0 },
-        { id: 154, name: "BH Dodol Pandan", price: 0 },
-        { id: 155, name: "Durian Beh Teh Saw", price: 28.90 },
-    ],
-    HopHup: [
-        { id: 201, name: "Musang King Tart", price: 19 },
-        { id: 202, name: "Mango Tart", price: 19 },
-        { id: 203, name: "Durian Wafer Roll", price: 23.80 },
-        { id: 204, name: "Omelette Durian", price: 25.80 },
-        { id: 205, name: "HT Coconut Ori Cookies", price: 14.80 },
-        { id: 206, name: "HT Coconut Pandan Cookies", price: 14.80 },
-        { id: 207, name: "HT Dodol Kopi", price: 21.80 },
-        { id: 208, name: "HT Dodol Durian", price: 21.80 },
-        { id: 209, name: "HT Freeze Dried Mango", price: 26.80 },
-        { id: 210, name: "HT Freeze Dried Durian", price: 26.80 },
-        { id: 211, name: "Salted Egg Fish Skin", price: 30 },
-        { id: 212, name: "Salted Egg Fish Skin Spicy", price: 30 },
-        { id: 213, name: "Salted Egg Salmon Skin", price: 30 },
-        { id: 214, name: "HT Musang King Durian Candy", price: 21.80 },
-        { id: 215, name: "HT Dried Fruit Mango", price: 24.80 }
-    ],
-    Chocolate: [
-        { id: 301, name: "AD Chocolate Durian", unit: 'pc', price: 39 },
-        { id: 302, name: "AD Chocolate Sabah Tea", unit: 'pc', price: 39 },
-        { id: 303, name: "AD Chocolate Mango", unit: 'pc', price: 39 },
-        { id: 304, name: "AD Chocolate Chili", unit: 'pc', price: 39 },
-        { id: 305, name: "AD Chocolate Dark", unit: 'pc', price: 39 },
-        { id: 306, name: "AD Chocolate Coffee", unit: 'pc', price: 39 },
-        { id: 307, name: "AD Chocolate Banana", unit: 'pc', price: 39 },
-        { id: 308, name: "AD Chocolate Tiramisu", unit: 'pc', price: 39 },
-        { id: 309, name: "AD Chocolate Mint", unit: 'pc', price: 39 },
-        { id: 310, name: "AD Chocolate Rambutan", unit: 'pc', price: 39 },
-        { id: 311, name: "AD Chocolate Soursup", unit: 'pc', price: 39 }
-    ],
-    Sotong: [
-        { id: 401, name: "Cuttlefish Red", price: 21.50 },
-        { id: 402, name: "Cuttlefish Lemon", price: 21.50 },
-        { id: 403, name: "Cuttlefish Honey", price: 21.50 },
-        { id: 404, name: "Cuttlefish Floss Original", price: 21.50 },
-        { id: 405, name: "Cuttlefish Massive", price: 21.50 },
-        { id: 406, name: "Cuttlefish Whole", price: 21.50 },
-        { id: 407, name: "Cuttlefish Roasted", price: 21.50 },
-        { id: 408, name: "Cuttlefish Chili", price: 21.50 },
-        { id: 409, name: "Five Star Cuttlefish", price: 34.00 },
-        { id: 410, name: "BH Sotong Cuttlefish", price: 14.60 },
-        { id: 411, name: "BH Gula Cuttlefish", price: 14.60 },
-        { id: 412, name: "BH Satay Fish", price: 14.60 }
-    ],
-    Coffee: [
-        { id: 501, name: "BH W/Coffee(Mini)", price: 25.80 },
-        { id: 502, name: "BH W/Coffee(Mini)No Sugar", price: 25.80 },
-        { id: 503, name: "BH Durian W/Coffee(Mini)", price: 25.80 },
-        { id: 504, name: "BH Teh Tarik(Mini)", price: 25.80 },
-        { id: 505, name: "BH W/Coffee", price: 29.50 },
-        { id: 506, name: "BH W/Coffee No Sugar", price: 29.50 },
-        { id: 507, name: "BH Teh Tarik", price: 29.50 },
-        { id: 508, name: "BH Durian White Coffee", price: 29.50 },
-        { id: 509, name: "Kopi Tenom Silver", price: 11.70 },
-        { id: 510, name: "Kopi Tenom Gold", price: 12.70 },
-        { id: 511, name: "Kopi Tenom Blue", price: 14.80 },
-        { id: 512, name: "Kopi Tenom Green", price: 14.30 },
-        { id: 513, name: "Kopi Tenom Red ", price: 15.60 }
-    ],
-    Amplang: [
-        { id: 601, name: "Amplang Ikan", price: 12 },
-        { id: 602, name: "Amplang Udang", price: 12 },
-        { id: 603, name: "Amplang Sotong", price: 12 },
-        { id: 604, name: "kuih Cincin", price: 12 },
-        { id: 605, name: "Kuih Cincin (Mini)", price: 18 }
-    ],
-    SabahTea: [
-        { id: 701, name: "Sabah Tea (S)", price: 7.50 },
-        { id: 702, name: "Sabah Tea (B)", price: 14 },
-        { id: 703, name: "Sabah Tea Box", price: 40 },
-        { id: 704, name: "Sabah Tea Gift Box", price: 96 },
-        { id: 705, name: "Sabah Tea Agarwood", price: 15.80 },
-        { id: 706, name: "Sabah Tea Cinnamon", price: 15.80 },
-        { id: 707, name: "Sabah Tea Ginger", price: 15.80 },
-        { id: 708, name: "Sabah Tea Misai Kuching", price: 15.80 },
-        { id: 709, name: "Sabah Tea Tongat Ali", price: 15.80 },
-        { id: 710, name: "Sabah Tea Geranium", price: 15.80 },
-        { id: 711, name: "Sabah Tea Lemon Grass", price: 15.80 },
-        { id: 712, name: "Sabah Tea Pandan", price: 15.80 },
-        { id: 713, name: "Sabah Tea Organic", price: 20 },
-        { id: 714, name: "Sabah Tea Wooden box (B)", price: 65 },
-        { id: 715, name: "Sabah Tea Wooden box (S)", price: 47.70 }
-    ],
-    Other: [
-        { id: 801, name: "Fruity Gummy Assorted", price: 8.50 },
-        { id: 802, name: "Fruity Gummy Mango", price: 8.50 },
-        { id: 803, name: "Durian Kuih", price: 33 },
-        { id: 804, name: "Anchovy Blue", price: 28.80 },
-        { id: 805, name: "Anchovy Green", price: 28.80 },
-        { id: 806, name: "Anchovy Red", price: 19.80 },
-        { id: 807, name: "Anchovy Yellow", price: 19.80 },
-        { id: 808, name: "Bird Nest", price: 0, customPrice: true },
-        { id: 809, name: "Fish Maw", price: 0, customPrice: true },
-        { id: 810, name: "Sea Cucumber", price: 0, customPrice: true }
-    ],
- Drink: [
-        { id: 901, name: "Spritzer 550ml", price: 3.50 },
-        { id: 902, name: "Spritzer 750ml", price: 6.00 },
-        { id: 903, name: "Spritzer 250ml", price: 2.50 },
-        { id: 904, name: "SASA 550ml", price: 2, }
-    ]
+    let categories = {}; // 存储从 Firebase 获取的分类和商品
+    let selectedItems = {};
+    let billNumber = 1; // 单据编号
+    let selectedStore = ""; // 保存选中的店铺名称
+    let supervisorName = "";
+    let cashierName = "";
 
-        };
-        let selectedItems = {};
-        let billNumber = 1; // 单据编号
-        let selectedStore = ""; // 保存选中的店铺名称
-        let supervisorName = "";
-        let cashierName = "";
+    window.onload = function () {
+        // 开始时显示输入 Supervisor 和 Cashier 的弹窗
+        showSupervisorAndCashierModal();
 
-        window.onload = function () {
+        // 设置实时监听，加载类别和商品数据
+        setupRealtimeListeners();
+    };
+
+    function setupRealtimeListeners() {
+        database.ref('products').on('value', (snapshot) => {
+            categories = snapshot.val();
+            console.log("Categories updated:", categories); // 调试日志
             const categoryContainer = document.getElementById("categoryContainer");
-            for (let category in categories) {
+            categoryContainer.innerHTML = ''; // 清空现有分类按钮
+
+            // 将类别转换为数组并按 'order' 排序
+            const categoriesArray = Object.keys(categories).map(categoryKey => {
+                return { key: categoryKey, order: categories[categoryKey].order || 0 };
+            }).sort((a, b) => a.order - b.order);
+
+            // 动态生成排序后的类别按钮
+            categoriesArray.forEach(category => {
                 const label = document.createElement("label");
-                label.innerHTML = `<input type="radio" name="category" value="${category}" onclick="showCategory()">${category}`;
+                label.innerHTML = `<input type="radio" name="category" value="${category.key}" onclick="showCategory()">${category.key}`;
                 categoryContainer.appendChild(label);
-            }
-
-            // 开始时显示输入 Supervisor 和 Cashier 的弹窗
-            showSupervisorAndCashierModal();
-
-            // 动态加载店铺列表到下拉菜单（如果需要）
-            // 例如，从 Firebase 获取店铺列表并填充下拉菜单
-        };
-
-        function showSupervisorAndCashierModal() {
-            const modal = document.getElementById("supervisorModal");
-            modal.style.display = "block"; // 显示模态框
-        }
-
-        function submitSupervisorAndCashier() {
-            const supervisorInput = document.getElementById("supervisorInput").value.trim();
-            const cashierInput = document.getElementById("cashierInput").value.trim();
-
-            if (!supervisorInput || !cashierInput) {
-                alert("Both Supervisor and Cashier names are required!");
-                return;
-            }
-
-            supervisorName = supervisorInput;
-            cashierName = cashierInput;
-
-            // 隐藏模态框
-            const modal = document.getElementById("supervisorModal");
-            modal.style.display = "none";
-
-            // 显示店铺选择模态框
-            showStoreSelectionModal();
-        }
-
-        function showStoreSelectionModal() {
-            const modal = document.getElementById("storeModal");
-            modal.style.display = "block"; // 显示模态框
-        }
-
-        function selectStore(storeName) {
-            selectedStore = storeName;
-
-            // 隐藏模态框
-            const modal = document.getElementById("storeModal");
-            modal.style.display = "none";
-
-            alert(`Store "${storeName}" selected successfully.`);
-            resetAllData(); // 重置数据
-            updateCurrentBillDisplay();
-        }
-
-        function resetAllData() {
-            billNumber = 1;
-            selectedItems = {};
-
-            // Reset the display
-            alert(`All previous data has been reset. Starting fresh from Bill 001.`);
-        }
-
-        function loadProducts(products) {
-            const productList = document.getElementById('productList');
-            productList.innerHTML = '';
-
-            products.forEach(product => {
-                const div = document.createElement('div');
-                if (product.customPrice) {
-                    div.innerHTML = `
-                        <label>${product.name}</label>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="number" 
-                                   id="price${product.id}" 
-                                   placeholder="Enter price" 
-                                   style="width: 100px; padding: 5px; background-color: white; color: black;"
-                                   step="0.10">
-                            <button onclick="addCustomItem(${product.id}, '${product.name}')">Add</button>
-                            <span onclick="removeItem('${product.id}-custom')" style="cursor: pointer;">❌</span>
-                        </div>
-                    `;
-                } else {
-                    div.innerHTML = `
-                        <input type="checkbox" id="item${product.id}" onchange="saveItem(${product.id}, '${product.name}', ${product.price})">
-                        <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
-                        <div style="display: flex; align-items: center;">
-                            <button onclick="decreaseQuantity(${product.id})">-</button>
-                            <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
-                            <button onclick="increaseQuantity(${product.id})">+</button>
-                            <span onclick="removeItem(${product.id})" style="cursor: pointer;">❌</span>
-                        </div>
-                    `;
-                }
-                productList.appendChild(div);
             });
-        }
 
-        function removeItem(uniqueId) {
-            const checkbox = document.getElementById('item' + uniqueId);
-            if (checkbox) {
-                checkbox.checked = false;
-                checkbox.onchange(); // 触发保存操作，移除商品
-            } else {
-                // 如果是自定义商品，直接从 selectedItems 中删除
-                delete selectedItems[uniqueId];
+            // 如果有已选择的类别，重新加载该类别的商品
+            let selectedCategory = document.querySelector('input[name="category"]:checked');
+            if (selectedCategory) {
+                showCategory();
             }
-            updateResult();
+        }, (error) => {
+            console.error("Error listening to products: ", error);
+        });
+    }
+
+    function showSupervisorAndCashierModal() {
+        const modal = document.getElementById("supervisorModal");
+        modal.style.display = "block"; // 显示模态框
+    }
+
+    function submitSupervisorAndCashier() {
+        const supervisorInput = document.getElementById("supervisorInput").value.trim();
+        const cashierInput = document.getElementById("cashierInput").value.trim();
+
+        if (!supervisorInput || !cashierInput) {
+            alert("Both Supervisor and Cashier names are required!");
+            return;
         }
 
-        function increaseQuantity(id) {
-            const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
-            let currentQuantity = parseInt(quantityDisplay.textContent);
-            currentQuantity++;
+        supervisorName = supervisorInput;
+        cashierName = cashierInput;
+
+        // 隐藏模态框
+        const modal = document.getElementById("supervisorModal");
+        modal.style.display = "none";
+
+        // 显示店铺选择模态框
+        showStoreSelectionModal();
+    }
+
+    function showStoreSelectionModal() {
+        const modal = document.getElementById("storeModal");
+        modal.style.display = "block"; // 显示模态框
+    }
+
+    function selectStore(storeName) {
+        selectedStore = storeName;
+
+        // 隐藏模态框
+        const modal = document.getElementById("storeModal");
+        modal.style.display = "none";
+
+        alert(`Store "${storeName}" selected successfully.`);
+        resetAllData(); // 重置数据
+        updateCurrentBillDisplay();
+    }
+
+    function resetAllData() {
+        billNumber = 1;
+        selectedItems = {};
+
+        // Reset the display
+        alert(`All previous data has been reset. Starting fresh from Bill 001.`);
+    }
+
+    function loadProducts(productsObj) {
+        const productList = document.getElementById('productList');
+        productList.innerHTML = '';
+
+        // 将 productsObj 转换为数组，并按 'order' 排序，跳过 'order' 字段
+        const productsArray = Object.keys(productsObj)
+            .filter(productId => productId !== "order") // 跳过 'order' 字段
+            .map(productId => {
+                return { id: productId, ...productsObj[productId] };
+            })
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        productsArray.forEach(product => {
+            const div = document.createElement('div');
+
+            if (product.customPrice) {
+                div.innerHTML = `
+                    <label>${product.name}</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" 
+                               id="price${product.id}" 
+                               placeholder="Enter price" 
+                               style="width: 100px; padding: 5px; background-color: white; color: black;"
+                               step="0.10">
+                        <button onclick="addCustomItem('${product.id}', '${product.name}')">Add</button>
+                        <span onclick="removeItem('${product.id}-custom')" style="cursor: pointer;">❌</span>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <input type="checkbox" id="item${product.id}" onchange="saveItem('${product.id}', '${product.name}', ${product.price})">
+                    <label for="item${product.id}">${product.name} - RM${product.price.toFixed(2)}</label>
+                    <div style="display: flex; align-items: center;">
+                        <button onclick="decreaseQuantity('${product.id}')">-</button>
+                        <span id="quantityDisplay${product.id}" style="padding: 0 10px;">1</span>
+                        <button onclick="increaseQuantity('${product.id}')">+</button>
+                        <span onclick="removeItem('${product.id}')" style="cursor: pointer;">❌</span>
+                    </div>
+                `;
+            }
+
+            productList.appendChild(div);
+        });
+    }
+
+    function removeItem(uniqueId) {
+        const checkbox = document.getElementById('item' + uniqueId);
+        if (checkbox) {
+            checkbox.checked = false;
+            checkbox.onchange(); // 触发保存操作，移除商品
+        } else {
+            // 如果是自定义商品，直接从 selectedItems 中删除
+            delete selectedItems[uniqueId];
+        }
+        updateResult();
+    }
+
+    function increaseQuantity(id) {
+        const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+        let currentQuantity = parseInt(quantityDisplay.textContent);
+        currentQuantity++;
+        quantityDisplay.textContent = currentQuantity;
+        saveQuantity(id, currentQuantity);  // 更新选中的商品数量
+        updateResult();
+    }
+
+    function decreaseQuantity(id) {
+        const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
+        let currentQuantity = parseInt(quantityDisplay.textContent);
+        if (currentQuantity > 1) {  // 确保数量不小于 1
+            currentQuantity--;
             quantityDisplay.textContent = currentQuantity;
             saveQuantity(id, currentQuantity);  // 更新选中的商品数量
             updateResult();
         }
+    }
 
-        function decreaseQuantity(id) {
-            const quantityDisplay = document.getElementById(`quantityDisplay${id}`);
-            let currentQuantity = parseInt(quantityDisplay.textContent);
-            if (currentQuantity > 1) {  // 确保数量不小于 1
-                currentQuantity--;
-                quantityDisplay.textContent = currentQuantity;
-                saveQuantity(id, currentQuantity);  // 更新选中的商品数量
-                updateResult();
+    function searchItems() {
+        const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+        const allProducts = [];
+
+        // 遍历每个类别，收集所有商品，跳过 'order' 字段
+        for (let category in categories) {
+            for (let productId in categories[category]) {
+                if (productId === "order") continue; // 跳过 'order' 字段
+                const product = categories[category][productId];
+                allProducts.push({ id: productId, ...product });
             }
         }
 
-        function searchItems() {
-            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
-            const allProducts = Object.values(categories).flat();
-            const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
+        console.log("All products:", allProducts); // 调试日志
 
-            // 清空建议列表
-            const suggestionsDiv = document.getElementById('suggestions');
-            suggestionsDiv.innerHTML = '';
+        const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchTerm));
 
-            // 如果搜索栏为空，不显示建议
-            if (searchTerm === '') {
+        console.log("Filtered products:", filteredProducts); // 调试日志
+
+        // 清空建议列表
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = '';
+
+        // 如果搜索栏为空，不显示建议
+        if (searchTerm === '') {
+            return;
+        }
+
+        // 显示建议列表
+        filteredProducts.forEach(product => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.textContent = product.name;
+            suggestionItem.onclick = function () {
+                document.getElementById('searchBar').value = product.name;
+                suggestionsDiv.innerHTML = '';  // 清空建议列表
+                // 传递一个对象，键为商品ID，值为商品信息
+                const singleProduct = {};
+                singleProduct[product.id] = product;
+                loadProducts(singleProduct);
+            };
+            suggestionsDiv.appendChild(suggestionItem);
+        });
+    }
+
+    function saveItem(id, name, price) {
+        const checkbox = document.getElementById("item" + id);
+        const quantity = parseInt(document.getElementById("quantityDisplay" + id).textContent) || 1;
+
+        if (checkbox.checked) {
+            selectedItems[id] = { name: name, quantity: quantity, price: price };
+        } else {
+            delete selectedItems[id];
+        }
+
+        // 如果至少有一个商品被选择，显示支付方式
+        if (Object.keys(selectedItems).length > 0) {
+            togglePaymentMethod(true);
+        } else {
+            togglePaymentMethod(false);
+        }
+
+        updateResult();
+    }
+
+    function saveQuantity(id, quantity) {
+        if (selectedItems[id]) {
+            selectedItems[id].quantity = quantity;
+        }
+    }
+
+    function toggleItems() {
+        let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
+        let quantities = document.querySelectorAll('#productList input[type="number"]');
+
+        checkboxes.forEach((checkbox) => (checkbox.disabled = false));
+        quantities.forEach((quantity) => (quantity.disabled = false));
+    }
+
+    function showCategory() {
+        let selectedCategory = document.querySelector('input[name="category"]:checked');
+
+        if (selectedCategory) {
+            let categoryValue = selectedCategory.value;
+            let productsToShow = categories[categoryValue];
+
+            if (productsToShow) {
+                loadProducts(productsToShow);
+            } else {
+                console.error("没有找到该分类的商品");
+            }
+        } else {
+            console.error("没有选中任何分类");
+        }
+
+        toggleItems();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        for (const item of Object.values(selectedItems)) {
+            total += item.quantity * item.price;
+        }
+        return total.toFixed(2);
+    }
+
+    function updateResult() {
+        let result = `Store: ${selectedStore}\n`;
+        result += `Supervisor: ${supervisorName}\n`;
+        result += `Cashier: ${cashierName}\n\n`;
+
+        const formattedBillNumber = billNumber.toString().padStart(3, "0");
+        result += `Bill No: ${formattedBillNumber}\n`;
+
+        let selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
+        if (selectedPaymentMethod) {
+            result += "Payment: " + selectedPaymentMethod.value + "\n\n";
+        } else {
+            result += "Payment: No Select\n";
+        }
+
+        for (const itemId in selectedItems) {
+            const item = selectedItems[itemId];
+            result += `${item.name} - ${item.quantity} pc, RM${(item.quantity * item.price).toFixed(2)}\n`;
+        }
+
+        result += `\nTotal: RM${calculateTotal()}\n`;
+
+        const currentDate = new Date();
+        const dateString = currentDate.toLocaleDateString();
+        const timeString = currentDate.toLocaleTimeString();
+        result += `\nDate: ${dateString}\nTime: ${timeString}`;
+
+        document.getElementById("result").innerText = result;
+    }
+
+    function clearAll() {
+        // 检查是否有商品
+        if (Object.keys(selectedItems).length === 0) {
+            alert("Please add at least one product before proceeding to the next bill.");
+            return;
+        }
+
+        // 检查支付方式
+        const selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
+        if (!selectedPaymentMethod) {
+            alert("Please select a payment method before proceeding.");
+            return;
+        }
+
+        const total = parseFloat(calculateTotal());
+
+        // 如果选择了 Cash，需要确保输入了现金金额
+        if (selectedPaymentMethod.value === "Cash") {
+            const cashAmount = parseFloat(document.getElementById("cashAmount").value);
+
+            if (isNaN(cashAmount) || cashAmount < total) {
+                alert("Please enter a valid cash amount that is equal to or greater than the total amount.");
                 return;
             }
 
-            // 显示建议列表
-            filteredProducts.forEach(product => {
-                const suggestionItem = document.createElement('div');
-                suggestionItem.textContent = product.name;
-                suggestionItem.onclick = function () {
-                    document.getElementById('searchBar').value = product.name;
-                    suggestionsDiv.innerHTML = '';  // 清空建议列表
-                    loadProducts([product]);  // 显示选中的产品信息
-                };
-                suggestionsDiv.appendChild(suggestionItem);
-            });
-        }
-
-        function saveItem(id, name, price) {
-            const checkbox = document.getElementById("item" + id);
-            const quantity = parseInt(document.getElementById("quantityDisplay" + id).textContent) || 1;
-
-            if (checkbox.checked) {
-                selectedItems[id] = { name: name, quantity: quantity, price: price };
+            // Update change
+            const change = cashAmount - total;
+            if (change >= 0) {
+                document.getElementById("changeAmount").textContent = `Change: RM${change.toFixed(2)}`;
             } else {
-                delete selectedItems[id];
-            }
-
-            // 如果至少有一个商品被选择，显示支付方式
-            if (Object.keys(selectedItems).length > 0) {
-                togglePaymentMethod(true);
-            } else {
-                togglePaymentMethod(false);
-            }
-
-            updateResult();
-        }
-
-        function saveQuantity(id, quantity) {
-            if (selectedItems[id]) {
-                selectedItems[id].quantity = quantity;
-            }
-        }
-
-        function toggleItems() {
-            let checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
-            let quantities = document.querySelectorAll('#productList input[type="number"]');
-
-            checkboxes.forEach((checkbox) => (checkbox.disabled = false));
-            quantities.forEach((quantity) => (quantity.disabled = false));
-        }
-
-        function showCategory() {
-            let selectedCategory = document.querySelector('input[name="category"]:checked');
-
-            if (selectedCategory) {
-                let categoryValue = selectedCategory.value;
-                let productsToShow = categories[categoryValue];
-
-                if (productsToShow) {
-                    loadProducts(productsToShow);
-                } else {
-                    console.error("没有找到该分类的商品");
-                }
-            } else {
-                console.error("没有选中任何分类");
-            }
-
-            toggleItems();
-        }
-
-        function calculateTotal() {
-            let total = 0;
-            for (const item of Object.values(selectedItems)) {
-                total += item.quantity * item.price;
-            }
-            return total.toFixed(2);
-        }
-
-        function updateResult() {
-            let result = `Store: ${selectedStore}\n`;
-            result += `Supervisor: ${supervisorName}\n`;
-            result += `Cashier: ${cashierName}\n\n`;
-
-            const formattedBillNumber = billNumber.toString().padStart(3, "0");
-            result += `Bill No: ${formattedBillNumber}\n`;
-
-            let selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
-            if (selectedPaymentMethod) {
-                result += "Payment: " + selectedPaymentMethod.value + "\n\n";
-            } else {
-                result += "Payment: No Select\n";
-            }
-
-            for (const itemId in selectedItems) {
-                const item = selectedItems[itemId];
-                result += `${item.name} - ${item.quantity} pc, RM${(item.quantity * item.price).toFixed(2)}\n`;
-            }
-
-            result += `\nTotal: RM${calculateTotal()}\n`;
-
-            const currentDate = new Date();
-            const dateString = currentDate.toLocaleDateString();
-            const timeString = currentDate.toLocaleTimeString();
-            result += `\nDate: ${dateString}\nTime: ${timeString}`;
-
-            document.getElementById("result").innerText = result;
-        }
-
-        function clearAll() {
-            // 检查是否有商品
-            if (Object.keys(selectedItems).length === 0) {
-                alert("Please add at least one product before proceeding to the next bill.");
+                document.getElementById("changeAmount").textContent = `Insufficient amount`;
                 return;
             }
-
-            // 检查支付方式
-            const selectedPaymentMethod = document.querySelector('input[name="store"]:checked');
-            if (!selectedPaymentMethod) {
-                alert("Please select a payment method before proceeding.");
-                return;
-            }
-
-            const total = parseFloat(calculateTotal());
-
-            // 如果选择了 Cash，需要确保输入了现金金额
-            if (selectedPaymentMethod.value === "Cash") {
-                const cashAmount = parseFloat(document.getElementById("cashAmount").value);
-
-                if (isNaN(cashAmount) || cashAmount < total) {
-                    alert("Please enter a valid cash amount that is equal to or greater than the total amount.");
-                    return;
-                }
-
-                // Update change
-                const change = cashAmount - total;
-                if (change >= 0) {
-                    document.getElementById("changeAmount").textContent = `Change: RM${change.toFixed(2)}`;
-                } else {
-                    document.getElementById("changeAmount").textContent = `Insufficient amount`;
-                    return;
-                }
-            }
-
-            // Save the bill
-            saveBill();
         }
 
-        function toggleDarkMode() {
-            const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
-            const toggleButton = document.querySelector('.toggle-mode-btn');
+        // Save the bill
+        saveBill();
+    }
 
-            if (isDarkModeEnabled) {
-                toggleButton.textContent = '切换至正常模式';
-                localStorage.setItem('dark-mode', 'enabled');
-            } else {
-                toggleButton.textContent = '切换至黑暗模式';
-                localStorage.setItem('dark-mode', 'disabled');
-            }
+    function toggleDarkMode() {
+        const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
+        const toggleButton = document.querySelector('.toggle-mode-btn');
+
+        if (isDarkModeEnabled) {
+            toggleButton.textContent = '切换至正常模式';
+            localStorage.setItem('dark-mode', 'enabled');
+        } else {
+            toggleButton.textContent = '切换至黑暗模式';
+            localStorage.setItem('dark-mode', 'disabled');
         }
+    }
 
-        function toggleCashInput() {
-            document.getElementById("cashInputContainer").style.display = "block";
-            calculateChange();
-        }
+    function toggleCashInput() {
+        document.getElementById("cashInputContainer").style.display = "block";
+        calculateChange();
+    }
 
-        function hideCashInput() {
-            document.getElementById("cashInputContainer").style.display = "none";
+    function hideCashInput() {
+        document.getElementById("cashInputContainer").style.display = "none";
+        document.getElementById("changeAmount").textContent = "";
+    }
+
+    function calculateChange() {
+        const cashAmount = parseFloat(document.getElementById("cashAmount").value) || 0;
+        const total = parseFloat(calculateTotal());
+        const change = cashAmount - total;
+
+        if (!isNaN(change) && change >= 0) {
+            document.getElementById("changeAmount").textContent = `Change: RM${change.toFixed(2)}`;
+        } else if (!isNaN(change) && change < 0) {
+            document.getElementById("changeAmount").textContent = `Insufficient amount`;
+        } else {
             document.getElementById("changeAmount").textContent = "";
         }
 
-        function calculateChange() {
-            const cashAmount = parseFloat(document.getElementById("cashAmount").value) || 0;
-            const total = parseFloat(calculateTotal());
-            const change = cashAmount - total;
+        updateResult();
+    }
 
-            if (!isNaN(change) && change >= 0) {
-                document.getElementById("changeAmount").textContent = `Change: RM${change.toFixed(2)}`;
-            } else if (!isNaN(change) && change < 0) {
-                document.getElementById("changeAmount").textContent = `Insufficient amount`;
+    function selectPayment(radio) {
+        // 移除所有支付选项的选中样式
+        document.querySelectorAll(".payment-option").forEach((option) => {
+            option.classList.remove("selected");
+        });
+
+        // 为选中的支付选项添加样式
+        if (radio.checked) {
+            radio.closest(".payment-option").classList.add("selected");
+        }
+    }
+
+    function addCustomItem(id, name) {
+        const priceInput = document.getElementById('price' + id);
+        const price = parseFloat(priceInput.value);
+
+        if (isNaN(price) || price <= 0) {
+            alert('Please enter a valid price');
+            return;
+        }
+
+        // 生成唯一的 ID，避免重复
+        const uniqueId = `${id}-custom-${Date.now()}`;
+
+        // 添加到 selectedItems，确保每次都是新记录
+        selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
+
+        updateResult();
+
+        // 在页面上显示成功信息
+        const successMessage = document.createElement('div');
+        successMessage.textContent = `${name} added successfully!`;
+        successMessage.style.color = 'green';
+        successMessage.style.position = 'fixed';
+        successMessage.style.top = '20px';
+        successMessage.style.right = '20px';
+        successMessage.style.backgroundColor = '#d4edda';
+        successMessage.style.padding = '10px';
+        successMessage.style.borderRadius = '5px';
+        successMessage.style.boxShadow = '0 0 10px rgba(0,0,0,0.1)';
+        document.body.appendChild(successMessage);
+        setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
+
+        // 清空价格输入框
+        priceInput.value = '';
+    }
+
+    function saveBill() {
+        if (!selectedStore) {
+            alert("Please select a store before saving the bill.");
+            return;
+        }
+
+        const formattedBillNumber = billNumber.toString().padStart(3, "0"); // 格式化为三位数，如 001, 002
+
+        // 创建单据对象
+        const billData = {
+            billNumber: formattedBillNumber,
+            store: selectedStore,
+            supervisor: supervisorName,
+            cashier: cashierName,
+            paymentMethod: document.querySelector('input[name="store"]:checked') ? document.querySelector('input[name="store"]:checked').value : "No Select",
+            items: selectedItems,
+            total: parseFloat(calculateTotal()),
+            date: new Date().toISOString()
+        };
+
+        // 将单据存储到 Realtime Database 的 "stores/{store}/bills/{billNumber}" 节点中
+        database.ref(`stores/${selectedStore}/bills/${formattedBillNumber}`).set(billData, function (error) {
+            if (error) {
+                console.error("Error saving bill: ", error);
+                alert("保存单据时出错，请稍后重试。");
             } else {
-                document.getElementById("changeAmount").textContent = "";
+                // 更新销售统计数据
+                updateSalesSummary(selectedStore, billData);
+
+                // 更新单据编号
+                billNumber++;
+                updateCurrentBillDisplay();
+
+                alert(`Bill ${formattedBillNumber} saved successfully!`);
+
+                // Clear selections for next customer
+                selectedItems = {};
+                document.getElementById("productList").innerHTML = "";
+                document.getElementById("result").innerText = "";
+                document.querySelectorAll('input[name="store"]').forEach((input) => (input.checked = false));
+                document.querySelectorAll('input[name="category"]').forEach((input) => (input.checked = false));
+                togglePaymentMethod(false); // 隐藏支付方式
+                hideCashInput(); // 隐藏现金输入框
+                toggleItems();
+            }
+        });
+    }
+
+    function updateSalesSummary(store, billData) {
+        const paymentMethod = billData.paymentMethod; // "Cash", "Card", "E-Wallet"
+        const total = billData.total;
+
+        // Update salesSummary for the specific store
+        const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
+        salesSummaryRef.once('value', function (snapshot) {
+            let currentData = snapshot.val();
+            if (!currentData) {
+                currentData = { cash: 0, card: 0, ewallet: 0 };
             }
 
-            updateResult();
-        }
-
-        function selectPayment(radio) {
-            // 移除所有支付选项的选中样式
-            document.querySelectorAll(".payment-option").forEach((option) => {
-                option.classList.remove("selected");
-            });
-
-            // 为选中的支付选项添加样式
-            if (radio.checked) {
-                radio.closest(".payment-option").classList.add("selected");
-            }
-        }
-
-        function addCustomItem(id, name) {
-            const priceInput = document.getElementById('price' + id);
-            const price = parseFloat(priceInput.value);
-
-            if (isNaN(price) || price <= 0) {
-                alert('Please enter a valid price');
-                return;
+            if (paymentMethod === "Cash") {
+                currentData.cash += total;
+            } else if (paymentMethod === "Card") {
+                currentData.card += total;
+            } else if (paymentMethod === "E-Wallet") {
+                currentData.ewallet += total;
             }
 
-            // 生成唯一的 ID，避免重复
-            const uniqueId = `${id}-custom-${Date.now()}`;
-
-            // 添加到 selectedItems，确保每次都是新记录
-            selectedItems[uniqueId] = { name: name, quantity: 1, price: price };
-
-            updateResult();
-
-            // 在页面上显示成功信息
-            const successMessage = document.createElement('div');
-            successMessage.textContent = `${name} added successfully!`;
-            successMessage.style.color = 'green';
-            document.body.appendChild(successMessage);
-            setTimeout(() => successMessage.remove(), 3000); // 3秒后自动移除提示信息
-
-            // 清空价格输入框
-            priceInput.value = '';
-        }
-
-        function saveBill() {
-            if (!selectedStore) {
-                alert("Please select a store before saving the bill.");
-                return;
-            }
-
-            const formattedBillNumber = billNumber.toString().padStart(3, "0"); // 格式化为三位数，如 001, 002
-
-            // 创建单据对象
-            const billData = {
-                billNumber: formattedBillNumber,
-                store: selectedStore,
-                supervisor: supervisorName,
-                cashier: cashierName,
-                paymentMethod: document.querySelector('input[name="store"]:checked') ? document.querySelector('input[name="store"]:checked').value : "No Select",
-                items: selectedItems,
-                total: parseFloat(calculateTotal()),
-                date: new Date().toISOString()
-            };
-
-            // 将单据存储到 Realtime Database 的 "stores/{store}/bills/{billNumber}" 节点中
-            database.ref(`stores/${selectedStore}/bills/${formattedBillNumber}`).set(billData, function (error) {
+            // Save updated salesSummary back to database
+            salesSummaryRef.set(currentData, function (error) {
                 if (error) {
-                    console.error("Error saving bill: ", error);
-                    alert("保存单据时出错，请稍后重试。");
+                    console.error("Error updating sales summary: ", error);
                 } else {
-                    // 更新销售统计数据
-                    updateSalesSummary(selectedStore, billData);
-
-                    // 更新单据编号
-                    billNumber++;
-                    updateCurrentBillDisplay();
-
-                    alert(`Bill ${formattedBillNumber} saved successfully!`);
-
-                    // Clear selections for next customer
-                    selectedItems = {};
-                    document.getElementById("productList").innerHTML = "";
-                    document.getElementById("result").innerText = "";
-                    document.querySelectorAll('input[name="store"]').forEach((input) => (input.checked = false));
-                    document.querySelectorAll('input[name="category"]').forEach((input) => (input.checked = false));
-                    togglePaymentMethod(false); // 隐藏支付方式
-                    hideCashInput(); // 隐藏现金输入框
-                    toggleItems();
+                    console.log("Sales summary updated successfully.");
                 }
             });
-        }
+        }, function (error) {
+            console.error("Error fetching sales summary: ", error);
+        });
 
-        function updateSalesSummary(store, billData) {
-            const paymentMethod = billData.paymentMethod; // "Cash", "Card", "E-Wallet"
-            const total = billData.total;
+        // Update soldItems for the specific store
+        const soldItemsRef = database.ref(`stores/${store}/soldItems`);
+        for (const itemId in billData.items) {
+            const item = billData.items[itemId];
+            const itemNameKey = item.name.replace(/\s+/g, '_'); // 用下划线替代空格
 
-            // Update salesSummary for the specific store
-            const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
-            salesSummaryRef.once('value', function (snapshot) {
-                let currentData = snapshot.val();
-                if (!currentData) {
-                    currentData = { cash: 0, card: 0, ewallet: 0 };
+            soldItemsRef.child(itemNameKey).once('value', function (snapshot) {
+                let currentItemData = snapshot.val();
+                if (!currentItemData) {
+                    currentItemData = { quantity: 0, totalPrice: 0 };
                 }
 
-                if (paymentMethod === "Cash") {
-                    currentData.cash += total;
-                } else if (paymentMethod === "Card") {
-                    currentData.card += total;
-                } else if (paymentMethod === "E-Wallet") {
-                    currentData.ewallet += total;
-                }
+                currentItemData.quantity += item.quantity;
+                currentItemData.totalPrice += item.quantity * item.price;
 
-                // Save updated salesSummary back to database
-                salesSummaryRef.set(currentData, function (error) {
+                // Save updated item data back to database
+                soldItemsRef.child(itemNameKey).set(currentItemData, function (error) {
                     if (error) {
-                        console.error("Error updating sales summary: ", error);
+                        console.error(`Error updating sold item ${item.name}: `, error);
                     } else {
-                        console.log("Sales summary updated successfully.");
+                        console.log(`Sold item ${item.name} updated successfully.`);
                     }
                 });
             }, function (error) {
-                console.error("Error fetching sales summary: ", error);
+                console.error(`Error fetching sold item ${item.name}: `, error);
             });
+        }
+    }
 
-            // Update soldItems for the specific store
-            const soldItemsRef = database.ref(`stores/${store}/soldItems`);
-            for (const itemId in billData.items) {
-                const item = billData.items[itemId];
-                const itemNameKey = item.name.replace(/\s+/g, '_'); // Use underscore instead of spaces
+    function updateCurrentBillDisplay() {
+        const formattedBillNumber = billNumber.toString().padStart(3, "0");
+        document.getElementById("currentBillDisplay").textContent = `Current Bill: ${formattedBillNumber}`;
+    }
 
-                soldItemsRef.child(itemNameKey).once('value', function (snapshot) {
-                    let currentItemData = snapshot.val();
-                    if (!currentItemData) {
-                        currentItemData = { quantity: 0, totalPrice: 0 };
-                    }
+    function searchBill(billInput) {
+        const billKey = billInput.padStart(3, "0"); // 确保是三位数
 
-                    currentItemData.quantity += item.quantity;
-                    currentItemData.totalPrice += item.quantity * item.price;
-
-                    // Save updated item data back to database
-                    soldItemsRef.child(itemNameKey).set(currentItemData, function (error) {
-                        if (error) {
-                            console.error(`Error updating sold item ${item.name}: `, error);
-                        } else {
-                            console.log(`Sold item ${item.name} updated successfully.`);
-                        }
-                    });
-                }, function (error) {
-                    console.error(`Error fetching sold item ${item.name}: `, error);
-                });
-            }
+        if (!selectedStore) {
+            alert("Please select a store before searching for bills.");
+            return;
         }
 
-        function updateCurrentBillDisplay() {
-            const formattedBillNumber = billNumber.toString().padStart(3, "0");
-            document.getElementById("currentBillDisplay").textContent = `Current Bill: ${formattedBillNumber}`;
-        }
-
-        function searchBill(billInput) {
-            const billKey = billInput.padStart(3, "0"); // Ensure it's three digits
-
-            if (!selectedStore) {
-                alert("Please select a store before searching for bills.");
-                return;
-            }
-
-            database.ref(`stores/${selectedStore}/bills/${billKey}`).once('value', function (snapshot) {
-                if (snapshot.exists()) {
-                    const billData = snapshot.val();
-                    const billText = `
+        database.ref(`stores/${selectedStore}/bills/${billKey}`).once('value', function (snapshot) {
+            if (snapshot.exists()) {
+                const billData = snapshot.val();
+                const billText = `
 Store: ${billData.store}
 Supervisor: ${billData.supervisor}
 Cashier: ${billData.cashier}
@@ -1037,57 +936,57 @@ Total: RM${billData.total.toFixed(2)}
 Date: ${new Date(billData.date).toLocaleDateString()}
 Time: ${new Date(billData.date).toLocaleTimeString()}
                 `;
-                    showModal(billText, billKey);
-                } else {
-                    alert(`Bill ${billInput} not found.`);
-                }
-            }, function (error) {
-                console.error("Error fetching bill: ", error);
-                alert("查询单据时出错，请稍后重试。");
-            });
-        }
+                showModal(billText, billKey);
+            } else {
+                alert(`Bill ${billInput} not found.`);
+            }
+        }, function (error) {
+            console.error("Error fetching bill: ", error);
+            alert("查询单据时出错，请稍后重试。");
+        });
+    }
 
-        function showModal(data, currentBill) {
-            // 创建一个模态框
-            const modal = document.createElement("div");
-            modal.id = "modalContainer";
-            modal.classList.add("modal");
+    function showModal(data, currentBill) {
+        // 创建一个模态框
+        const modal = document.createElement("div");
+        modal.id = "modalContainer";
+        modal.classList.add("modal");
 
-            // 添加单据内容
-            const content = document.createElement("pre");
-            content.style.color = "black";
-            content.style.margin = "0";
-            content.style.whiteSpace = "pre-wrap"; // 自动换行
-            content.textContent = data;
-            modal.appendChild(content);
+        // 添加单据内容
+        const content = document.createElement("pre");
+        content.style.color = "black";
+        content.style.margin = "0";
+        content.style.whiteSpace = "pre-wrap"; // 自动换行
+        content.textContent = data;
+        modal.appendChild(content);
 
-            // 添加按钮容器
-            const buttonContainer = document.createElement("div");
-            buttonContainer.style.display = "flex";
-            buttonContainer.style.justifyContent = "space-between";
-            buttonContainer.style.marginTop = "20px";
+        // 添加按钮容器
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "flex";
+        buttonContainer.style.justifyContent = "space-between";
+        buttonContainer.style.marginTop = "20px";
 
-            // 添加"前一张"按钮
-            const prevButton = document.createElement("button");
-            prevButton.textContent = "Previous Bill";
-            prevButton.style.backgroundColor = "#007bff";
-            prevButton.style.color = "white";
-            prevButton.style.padding = "10px";
-            prevButton.style.border = "none";
-            prevButton.style.borderRadius = "5px";
-            prevButton.style.cursor = "pointer";
-            prevButton.onclick = function () {
-                const prevBillNumber = parseInt(currentBill) - 1;
-                if (prevBillNumber < 1) {
-                    alert("No previous bill found.");
-                    return;
-                }
-                const prevBillKey = prevBillNumber.toString().padStart(3, "0");
-                database.ref(`stores/${selectedStore}/bills/${prevBillKey}`).once('value', function (prevSnapshot) {
-                    if (prevSnapshot.exists()) {
-                        document.body.removeChild(modal); // 关闭当前模态框
-                        const prevBillData = prevSnapshot.val();
-                        const prevBillText = `
+        // 添加"前一张"按钮
+        const prevButton = document.createElement("button");
+        prevButton.textContent = "Previous Bill";
+        prevButton.style.backgroundColor = "#007bff";
+        prevButton.style.color = "white";
+        prevButton.style.padding = "10px";
+        prevButton.style.border = "none";
+        prevButton.style.borderRadius = "5px";
+        prevButton.style.cursor = "pointer";
+        prevButton.onclick = function () {
+            const prevBillNumber = parseInt(currentBill) - 1;
+            if (prevBillNumber < 1) {
+                alert("No previous bill found.");
+                return;
+            }
+            const prevBillKey = prevBillNumber.toString().padStart(3, "0");
+            database.ref(`stores/${selectedStore}/bills/${prevBillKey}`).once('value', function (prevSnapshot) {
+                if (prevSnapshot.exists()) {
+                    document.body.removeChild(modal); // 关闭当前模态框
+                    const prevBillData = prevSnapshot.val();
+                    const prevBillText = `
 Store: ${prevBillData.store}
 Supervisor: ${prevBillData.supervisor}
 Cashier: ${prevBillData.cashier}
@@ -1102,34 +1001,34 @@ Total: RM${prevBillData.total.toFixed(2)}
 Date: ${new Date(prevBillData.date).toLocaleDateString()}
 Time: ${new Date(prevBillData.date).toLocaleTimeString()}
                         `;
-                        showModal(prevBillText, prevBillKey);
-                    } else {
-                        alert("No previous bill found.");
-                    }
-                }, function (error) {
-                    console.error("Error fetching previous bill: ", error);
-                    alert("查询前一张单据时出错。");
-                });
-            };
-            buttonContainer.appendChild(prevButton);
+                    showModal(prevBillText, prevBillKey);
+                } else {
+                    alert("No previous bill found.");
+                }
+            }, function (error) {
+                console.error("Error fetching previous bill: ", error);
+                alert("查询前一张单据时出错。");
+            });
+        };
+        buttonContainer.appendChild(prevButton);
 
-            // 添加"后一张"按钮
-            const nextButton = document.createElement("button");
-            nextButton.textContent = "Next Bill";
-            nextButton.style.backgroundColor = "#007bff";
-            nextButton.style.color = "white";
-            nextButton.style.padding = "10px";
-            nextButton.style.border = "none";
-            nextButton.style.borderRadius = "5px";
-            nextButton.style.cursor = "pointer";
-            nextButton.onclick = function () {
-                const nextBillNumber = parseInt(currentBill) + 1;
-                const nextBillKey = nextBillNumber.toString().padStart(3, "0");
-                database.ref(`stores/${selectedStore}/bills/${nextBillKey}`).once('value', function (nextSnapshot) {
-                    if (nextSnapshot.exists()) {
-                        document.body.removeChild(modal); // 关闭当前模态框
-                        const nextBillData = nextSnapshot.val();
-                        const nextBillText = `
+        // 添加"后一张"按钮
+        const nextButton = document.createElement("button");
+        nextButton.textContent = "Next Bill";
+        nextButton.style.backgroundColor = "#007bff";
+        nextButton.style.color = "white";
+        nextButton.style.padding = "10px";
+        nextButton.style.border = "none";
+        nextButton.style.borderRadius = "5px";
+        nextButton.style.cursor = "pointer";
+        nextButton.onclick = function () {
+            const nextBillNumber = parseInt(currentBill) + 1;
+            const nextBillKey = nextBillNumber.toString().padStart(3, "0");
+            database.ref(`stores/${selectedStore}/bills/${nextBillKey}`).once('value', function (nextSnapshot) {
+                if (nextSnapshot.exists()) {
+                    document.body.removeChild(modal); // 关闭当前模态框
+                    const nextBillData = nextSnapshot.val();
+                    const nextBillText = `
 Store: ${nextBillData.store}
 Supervisor: ${nextBillData.supervisor}
 Cashier: ${nextBillData.cashier}
@@ -1144,235 +1043,236 @@ Total: RM${nextBillData.total.toFixed(2)}
 Date: ${new Date(nextBillData.date).toLocaleDateString()}
 Time: ${new Date(nextBillData.date).toLocaleTimeString()}
                         `;
-                        showModal(nextBillText, nextBillKey);
-                    } else {
-                        alert("No next bill found.");
-                    }
-                }, function (error) {
-                    console.error("Error fetching next bill: ", error);
-                    alert("查询后一张单据时出错。");
-                });
-            };
-            buttonContainer.appendChild(nextButton);
-
-            modal.appendChild(buttonContainer);
-
-            // 添加关闭按钮
-            const closeButton = document.createElement("button");
-            closeButton.textContent = "Close";
-            closeButton.classList.add("close-button");
-            closeButton.onclick = function () {
-                document.body.removeChild(modal);
-            };
-
-            modal.appendChild(closeButton);
-
-            // 添加模态框到 body
-            document.body.appendChild(modal);
-            modal.style.display = "block";
-        }
-
-        function deleteBill() {
-            const billInput = document.getElementById("billSearchInput").value.trim();
-            if (billInput === "") {
-                alert("Please enter a valid bill number.");
-                return;
-            }
-
-            const billKey = billInput.padStart(3, "0"); // 确保是三位数，如 001
-
-            if (!selectedStore) {
-                alert("Please select a store before deleting bills.");
-                return;
-            }
-
-            const billRef = database.ref(`stores/${selectedStore}/bills/${billKey}`);
-
-            billRef.once('value', function (snapshot) {
-                if (snapshot.exists()) {
-                    const billData = snapshot.val();
-
-                    const confirmDelete = confirm(`Are you sure you want to delete bill ${billInput}?`);
-                    if (confirmDelete) {
-                        // 先更新 salesSummary 和 soldItems
-                        const paymentMethod = billData.paymentMethod;
-                        const total = billData.total;
-                        const items = billData.items;
-
-                        // 更新 salesSummary
-                        const salesSummaryRef = database.ref(`stores/${selectedStore}/salesSummary`);
-                        salesSummaryRef.once('value', function (summarySnapshot) {
-                            let summaryData = summarySnapshot.val();
-                            if (!summaryData) {
-                                summaryData = { cash: 0, card: 0, ewallet: 0 };
-                            }
-
-                            if (paymentMethod === "Cash") {
-                                summaryData.cash -= total;
-                                if (summaryData.cash < 0) summaryData.cash = 0; // 防止负数
-                            } else if (paymentMethod === "Card") {
-                                summaryData.card -= total;
-                                if (summaryData.card < 0) summaryData.card = 0;
-                            } else if (paymentMethod === "E-Wallet") {
-                                summaryData.ewallet -= total;
-                                if (summaryData.ewallet < 0) summaryData.ewallet = 0;
-                            }
-
-                            // 更新 salesSummary
-                            salesSummaryRef.set(summaryData, function (error) {
-                                if (error) {
-                                    console.error("Error updating sales summary: ", error);
-                                    alert("删除单据时更新销售摘要出错，请稍后重试。");
-                                    return;
-                                }
-
-                                // 更新 soldItems
-                                const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
-                                const updateSoldItemsPromises = [];
-
-                                for (const itemId in items) {
-                                    const item = items[itemId];
-                                    const itemNameKey = item.name.replace(/\s+/g, '_'); // 用下划线替代空格
-
-                                    const itemRef = soldItemsRef.child(itemNameKey);
-                                    const promise = itemRef.once('value').then(function (itemSnapshot) {
-                                        if (itemSnapshot.exists()) {
-                                            const currentItemData = itemSnapshot.val();
-                                            currentItemData.quantity -= item.quantity;
-                                            currentItemData.totalPrice -= item.quantity * item.price;
-
-                                            // 确保不会出现负数
-                                            if (currentItemData.quantity < 0) currentItemData.quantity = 0;
-                                            if (currentItemData.totalPrice < 0) currentItemData.totalPrice = 0;
-
-                                            // 如果商品数量和总价都为零，则删除该商品记录
-                                            if (currentItemData.quantity === 0 && currentItemData.totalPrice === 0) {
-                                                return itemRef.remove();
-                                            } else {
-                                                return itemRef.set(currentItemData);
-                                            }
-                                        }
-                                    }).catch(function (error) {
-                                        console.error(`Error updating sold item ${item.name}: `, error);
-                                    });
-
-                                    updateSoldItemsPromises.push(promise);
-                                }
-
-                                // 等待所有 soldItems 更新完成
-                                Promise.all(updateSoldItemsPromises).then(function () {
-                                    // 最后删除单据
-                                    billRef.remove(function (error) {
-                                        if (error) {
-                                            console.error("Error deleting bill: ", error);
-                                            alert("删除单据时出错，请稍后重试。");
-                                        } else {
-                                            alert(`Bill ${billInput} deleted successfully.`);
-
-                                            // 如果当前显示的单据是被删除的单据，可以清除显示
-                                            document.getElementById("result").innerText = "";
-                                            document.getElementById("productList").innerHTML = "";
-                                            selectedItems = {};
-                                            togglePaymentMethod(false);
-                                            hideCashInput();
-                                            toggleItems();
-                                            updateCurrentBillDisplay(); // 可选：更新当前单据显示
-                                        }
-                                    });
-                                });
-                            });
-                        }, function (error) {
-                            console.error("Error fetching sales summary: ", error);
-                            alert("删除单据时获取销售摘要出错，请稍后重试。");
-                        });
-                    }
+                    showModal(nextBillText, nextBillKey);
                 } else {
-                    alert(`Bill ${billInput} not found.`);
+                    alert("No next bill found.");
                 }
             }, function (error) {
-                console.error("Error fetching bill: ", error);
-                alert("查询单据时出错，请稍后重试。");
+                console.error("Error fetching next bill: ", error);
+                alert("查询后一张单据时出错。");
             });
+        };
+        buttonContainer.appendChild(nextButton);
+
+        modal.appendChild(buttonContainer);
+
+        // 添加关闭按钮
+        const closeButton = document.createElement("button");
+        closeButton.textContent = "Close";
+        closeButton.classList.add("close-button");
+        closeButton.onclick = function () {
+            document.body.removeChild(modal);
+        };
+
+        modal.appendChild(closeButton);
+
+        // 添加模态框到 body
+        document.body.appendChild(modal);
+        modal.style.display = "block";
+    }
+
+    function deleteBill() {
+        const billInput = document.getElementById("billSearchInput").value.trim();
+        if (billInput === "") {
+            alert("Please enter a valid bill number.");
+            return;
         }
 
-        function togglePaymentMethod(show) {
-            const paymentSection = document.querySelector(".payment-section");
-            if (show) {
-                paymentSection.style.display = "block"; // 显示支付方式
-            } else {
-                paymentSection.style.display = "none"; // 隐藏支付方式
-            }
+        const billKey = billInput.padStart(3, "0"); // 确保是三位数，如 001
+
+        if (!selectedStore) {
+            alert("Please select a store before deleting bills.");
+            return;
         }
 
-        function showSalesClosing() {
-            if (!selectedStore) {
-                alert("Please select a store before viewing sales closing.");
-                return;
-            }
+        const billRef = database.ref(`stores/${selectedStore}/bills/${billKey}`);
 
-            const salesSummaryRef = database.ref(`stores/${selectedStore}/salesSummary`);
-            const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
+        billRef.once('value', function (snapshot) {
+            if (snapshot.exists()) {
+                const billData = snapshot.val();
 
-            // Fetch sales summary
-            salesSummaryRef.once('value', function (summarySnapshot) {
-                const summaryData = summarySnapshot.val() || { cash: 0, card: 0, ewallet: 0 };
-                const totalSales = summaryData.cash + summaryData.card + summaryData.ewallet;
+                const confirmDelete = confirm(`Are you sure you want to delete bill ${billInput}?`);
+                if (confirmDelete) {
+                    // 先更新 salesSummary 和 soldItems
+                    const paymentMethod = billData.paymentMethod;
+                    const total = billData.total;
+                    const items = billData.items;
 
-                // Fetch sold items
-                soldItemsRef.orderByChild('quantity').once('value', function (itemsSnapshot) {
-                    const itemsData = itemsSnapshot.val() || {};
-                    // Convert to array and sort by quantity descending
-                    const sortedItems = Object.entries(itemsData).sort((a, b) => b[1].quantity - a[1].quantity);
+                    // 更新 salesSummary
+                    const salesSummaryRef = database.ref(`stores/${selectedStore}/salesSummary`);
+                    salesSummaryRef.once('value', function (summarySnapshot) {
+                        let summaryData = summarySnapshot.val();
+                        if (!summaryData) {
+                            summaryData = { cash: 0, card: 0, ewallet: 0 };
+                        }
 
-                    // Create modal content
-                    const modal = document.createElement("div");
-                    modal.classList.add("modal");
+                        if (paymentMethod === "Cash") {
+                            summaryData.cash -= total;
+                            if (summaryData.cash < 0) summaryData.cash = 0; // 防止负数
+                        } else if (paymentMethod === "Card") {
+                            summaryData.card -= total;
+                            if (summaryData.card < 0) summaryData.card = 0;
+                        } else if (paymentMethod === "E-Wallet") {
+                            summaryData.ewallet -= total;
+                            if (summaryData.ewallet < 0) summaryData.ewallet = 0;
+                        }
 
-                    const content = document.createElement("div");
-                    content.style.color = "black";
+                        // 更新 salesSummary
+                        salesSummaryRef.set(summaryData, function (error) {
+                            if (error) {
+                                console.error("Error updating sales summary: ", error);
+                                alert("删除单据时更新销售摘要出错，请稍后重试。");
+                                return;
+                            }
 
-                    // 商品排序：按购买数量降序
-                    let itemDetails = "";
-                    sortedItems.forEach(([itemName, item]) => {
-                        itemDetails += `<p>${itemName.replace(/_/g, ' ')} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}</p>`;
+                            // 更新 soldItems
+                            const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
+                            const updateSoldItemsPromises = [];
+
+                            for (const itemId in items) {
+                                const item = items[itemId];
+                                const itemNameKey = item.name.replace(/\s+/g, '_'); // 用下划线替代空格
+
+                                const itemRef = soldItemsRef.child(itemNameKey);
+                                const promise = itemRef.once('value').then(function (itemSnapshot) {
+                                    if (itemSnapshot.exists()) {
+                                        const currentItemData = itemSnapshot.val();
+                                        currentItemData.quantity -= item.quantity;
+                                        currentItemData.totalPrice -= item.quantity * item.price;
+
+                                        // 确保不会出现负数
+                                        if (currentItemData.quantity < 0) currentItemData.quantity = 0;
+                                        if (currentItemData.totalPrice < 0) currentItemData.totalPrice = 0;
+
+                                        // 如果商品数量和总价都为零，则删除该商品记录
+                                        if (currentItemData.quantity === 0 && currentItemData.totalPrice === 0) {
+                                            return itemRef.remove();
+                                        } else {
+                                            return itemRef.set(currentItemData);
+                                        }
+                                    }
+                                }).catch(function (error) {
+                                    console.error(`Error updating sold item ${item.name}: `, error);
+                                });
+
+                                updateSoldItemsPromises.push(promise);
+                            }
+
+                            // 等待所有 soldItems 更新完成
+                            Promise.all(updateSoldItemsPromises).then(function () {
+                                // 最后删除单据
+                                billRef.remove(function (error) {
+                                    if (error) {
+                                        console.error("Error deleting bill: ", error);
+                                        alert("删除单据时出错，请稍后重试。");
+                                    } else {
+                                        alert(`Bill ${billInput} deleted successfully.`);
+
+                                        // 如果当前显示的单据是被删除的单据，可以清除显示
+                                        document.getElementById("result").innerText = "";
+                                        document.getElementById("productList").innerHTML = "";
+                                        selectedItems = {};
+                                        togglePaymentMethod(false);
+                                        hideCashInput();
+                                        toggleItems();
+                                        updateCurrentBillDisplay(); // 可选：更新当前单据显示
+                                    }
+                                });
+                            });
+                        });
+                    }, function (error) {
+                        console.error("Error fetching sales summary: ", error);
+                        alert("删除单据时获取销售摘要出错，请稍后重试。");
                     });
+                }
+            } else {
+                alert(`Bill ${billInput} not found.`);
+            }
+        }, function (error) {
+            console.error("Error fetching bill: ", error);
+            alert("查询单据时出错，请稍后重试。");
+        });
+    }
 
-                    content.innerHTML = `
-                        <h3>Sales Closing</h3>
-                        <p><strong>Store:</strong> ${selectedStore}</p>
-                        <p><strong>Supervisor:</strong> ${supervisorName}</p>
-                        <p><strong>Cashier:</strong> ${cashierName}</p>
-                        <p><strong>Cash:</strong> RM${summaryData.cash.toFixed(2)}</p>
-                        <p><strong>Card:</strong> RM${summaryData.card.toFixed(2)}</p>
-                        <p><strong>E-Wallet:</strong> RM${summaryData.ewallet.toFixed(2)}</p>
-                        <p><strong>Total Sales:</strong> RM${totalSales.toFixed(2)}</p>
-                        <h4>Sold Items (Sorted by Quantity):</h4>
-                        ${itemDetails}
-                    `;
-                    modal.appendChild(content);
-
-                    // 添加关闭按钮
-                    const closeButton = document.createElement("button");
-                    closeButton.textContent = "Close";
-                    closeButton.classList.add("close-button");
-                    closeButton.onclick = function () {
-                        document.body.removeChild(modal);
-                    };
-                    modal.appendChild(closeButton);
-
-                    // 添加模态框到 body
-                    document.body.appendChild(modal);
-                    modal.style.display = "block";
-                }, function (error) {
-                    console.error("Error fetching sold items: ", error);
-                    alert("获取售出物品数据时出错。");
-                });
-            }, function (error) {
-                console.error("Error fetching sales summary: ", error);
-                alert("获取销售摘要数据时出错。");
-            });
+    function togglePaymentMethod(show) {
+        const paymentSection = document.querySelector(".payment-section");
+        if (show) {
+            paymentSection.style.display = "block"; // 显示支付方式
+        } else {
+            paymentSection.style.display = "none"; // 隐藏支付方式
         }
-    </script>
+    }
+
+    function showSalesClosing() {
+        if (!selectedStore) {
+            alert("Please select a store before viewing sales closing.");
+            return;
+        }
+
+        const salesSummaryRef = database.ref(`stores/${selectedStore}/salesSummary`);
+        const soldItemsRef = database.ref(`stores/${selectedStore}/soldItems`);
+
+        // Fetch sales summary
+        salesSummaryRef.once('value', function (summarySnapshot) {
+            const summaryData = summarySnapshot.val() || { cash: 0, card: 0, ewallet: 0 };
+            const totalSales = summaryData.cash + summaryData.card + summaryData.ewallet;
+
+            // Fetch sold items
+            soldItemsRef.orderByChild('quantity').once('value', function (itemsSnapshot) {
+                const itemsData = itemsSnapshot.val() || {};
+                // Convert to array and sort by quantity descending
+                const sortedItems = Object.entries(itemsData).sort((a, b) => b[1].quantity - a[1].quantity);
+
+                // Create modal content
+                const modal = document.createElement("div");
+                modal.classList.add("modal");
+
+                const content = document.createElement("div");
+                content.style.color = "black";
+
+                // 商品排序：按购买数量降序
+                let itemDetails = "";
+                sortedItems.forEach(([itemName, item]) => {
+                    itemDetails += `<p>${itemName.replace(/_/g, ' ')} - Quantity: ${item.quantity}, Total: RM${item.totalPrice.toFixed(2)}</p>`;
+                });
+
+                content.innerHTML = `
+                    <h3>Sales Closing</h3>
+                    <p><strong>Store:</strong> ${selectedStore}</p>
+                    <p><strong>Supervisor:</strong> ${supervisorName}</p>
+                    <p><strong>Cashier:</strong> ${cashierName}</p>
+                    <p><strong>Cash:</strong> RM${summaryData.cash.toFixed(2)}</p>
+                    <p><strong>Card:</strong> RM${summaryData.card.toFixed(2)}</p>
+                    <p><strong>E-Wallet:</strong> RM${summaryData.ewallet.toFixed(2)}</p>
+                    <p><strong>Total Sales:</strong> RM${totalSales.toFixed(2)}</p>
+                    <h4>Sold Items (Sorted by Quantity):</h4>
+                    ${itemDetails}
+                `;
+                modal.appendChild(content);
+
+                // 添加关闭按钮
+                const closeButton = document.createElement("button");
+                closeButton.textContent = "Close";
+                closeButton.classList.add("close-button");
+                closeButton.onclick = function () {
+                    document.body.removeChild(modal);
+                };
+                modal.appendChild(closeButton);
+
+                // 添加模态框到 body
+                document.body.appendChild(modal);
+                modal.style.display = "block";
+            }, function (error) {
+                console.error("Error fetching sold items: ", error);
+                alert("获取售出物品数据时出错。");
+            });
+        }, function (error) {
+            console.error("Error fetching sales summary: ", error);
+            alert("获取销售摘要数据时出错。");
+        });
+    }
+</script>
+
     <p class="contact-info">If you have any questions or need to add new products, please contact me (Mark).</p>
 
     <!-- Supervisor 和 Cashier 输入模态框 -->
