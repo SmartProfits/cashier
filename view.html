@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -53,7 +53,7 @@
             color: white;
         }
 
-        /* 响应式设计 */
+        /* Responsive Design */
         @media screen and (max-width: 600px) {
             table,
             th,
@@ -66,7 +66,7 @@
             }
         }
 
-        /* 店铺选择样式 */
+        /* Store Selection Style */
         .store-select {
             width: 200px;
             padding: 10px;
@@ -74,12 +74,12 @@
             margin-bottom: 20px;
         }
 
-        /* 表格容器样式 */
+        /* Table Container Style */
         .table-container {
             overflow-x: auto;
         }
 
-        /* 单据列表样式 */
+        /* Bill List Style */
         .bill-list {
             max-height: 400px;
             overflow-y: auto;
@@ -110,53 +110,53 @@
     <h1>Sales Overview</h1>
 
     <div class="section">
-        <h2>选择店铺</h2>
+        <h2>Select Store</h2>
         <select id="storeSelect" class="store-select" onchange="fetchStoreData()">
-            <option value="">-- 选择店铺 --</option>
+            <option value="">-- Select Store --</option>
             <option value="JKL">JKL</option>
             <option value="TOM">TOM</option>
             <option value="Ole-Ole">Ole-Ole</option>
-            <!-- 根据需要添加更多店铺 -->
+            <!-- Add more stores as needed -->
         </select>
     </div>
 
     <div class="section" id="salesSummarySection" style="display: none;">
-        <h2>销售摘要</h2>
+        <h2>Sales Summary</h2>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>支付方式</th>
-                        <th>总金额 (RM)</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount (RM)</th>
                     </tr>
                 </thead>
                 <tbody id="salesSummaryTable">
-                    <!-- 数据将通过 JavaScript 填充 -->
+                    <!-- Data will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
     <div class="section" id="soldItemsSection" style="display: none;">
-        <h2>售出物品 (按数量排序)</h2>
+        <h2>Sold Items (Sorted by Quantity)</h2>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>物品名称</th>
-                        <th>数量</th>
-                        <th>总销售额 (RM)</th>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Total Sales (RM)</th>
                     </tr>
                 </thead>
                 <tbody id="soldItemsTable">
-                    <!-- 数据将通过 JavaScript 填充 -->
+                    <!-- Data will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
     <div class="section" id="billListSection" style="display: none;">
-        <h2>单据列表</h2>
+        <h2>Bill List</h2>
         <div class="bill-list">
             <table>
                 <thead>
@@ -164,21 +164,21 @@
                         <th>Bill No</th>
                         <th>Supervisor</th>
                         <th>Cashier</th>
-                        <th>支付方式</th>
-                        <th>总金额 (RM)</th>
-                        <th>日期</th>
-                        <th>时间</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount (RM)</th>
+                        <th>Date</th>
+                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody id="billListTable">
-                    <!-- 数据将通过 JavaScript 填充 -->
+                    <!-- Data will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Firebase 配置
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCsK-jF0s5losIGNrlxmD83UCzAsXi7gaQ",
             authDomain: "sales-listing-8d2d7.firebaseapp.com",
@@ -190,42 +190,65 @@
             measurementId: "G-JQ8RWV1S7C"
         };
 
-        // 初始化 Firebase
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 获取并显示店铺数据
+        // References to Firebase listeners
+        let salesSummaryListener = null;
+        let soldItemsListener = null;
+        let billListListener = null;
+
+        // Fetch and display store data in real-time
         function fetchStoreData() {
             const selectedStore = document.getElementById('storeSelect').value;
 
             if (selectedStore === "") {
-                // 清空所有显示的部分
+                // Hide all sections
                 document.getElementById("salesSummarySection").style.display = "none";
                 document.getElementById("soldItemsSection").style.display = "none";
                 document.getElementById("billListSection").style.display = "none";
+
+                // Remove existing listeners if any
+                removeListeners();
+
                 return;
             }
 
-            // 显示各部分
+            // Show all sections
             document.getElementById("salesSummarySection").style.display = "block";
             document.getElementById("soldItemsSection").style.display = "block";
             document.getElementById("billListSection").style.display = "block";
 
-            // Fetch and display sales summary
-            fetchSalesSummary(selectedStore);
+            // Remove existing listeners to avoid duplicates
+            removeListeners();
 
-            // Fetch and display sold items
-            fetchSoldItems(selectedStore);
-
-            // Fetch and display bill list
-            fetchBillList(selectedStore);
+            // Set up real-time listeners
+            listenSalesSummary(selectedStore);
+            listenSoldItems(selectedStore);
+            listenBillList(selectedStore);
         }
 
-        // 获取销售摘要
-        function fetchSalesSummary(store) {
-            const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
+        // Remove existing Firebase listeners
+        function removeListeners() {
+            if (salesSummaryListener) {
+                salesSummaryListener.off();
+                salesSummaryListener = null;
+            }
+            if (soldItemsListener) {
+                soldItemsListener.off();
+                soldItemsListener = null;
+            }
+            if (billListListener) {
+                billListListener.off();
+                billListListener = null;
+            }
+        }
 
-            salesSummaryRef.once('value', function(snapshot) {
+        // Listen to sales summary in real-time
+        function listenSalesSummary(store) {
+            const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
+            salesSummaryListener = salesSummaryRef.on('value', function(snapshot) {
                 const summaryData = snapshot.val() || { cash: 0, card: 0, ewallet: 0 };
                 const tableBody = document.getElementById("salesSummaryTable");
 
@@ -249,17 +272,17 @@
                 `;
             }, function(error) {
                 console.error("Error fetching sales summary: ", error);
-                alert("获取销售摘要时出错。");
+                alert("Error fetching sales summary.");
             });
         }
 
-        // 获取售出物品数据
-        function fetchSoldItems(store) {
+        // Listen to sold items in real-time
+        function listenSoldItems(store) {
             const soldItemsRef = database.ref(`stores/${store}/soldItems`);
-            soldItemsRef.orderByChild('quantity').once('value', function(snapshot) {
+            soldItemsListener = soldItemsRef.on('value', function(snapshot) {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    // 将数据转换为数组并排序
+                    // Convert data to array and sort
                     const sortedItems = Object.entries(data).sort((a, b) => b[1].quantity - a[1].quantity);
                     const tableBody = document.getElementById("soldItemsTable");
                     tableBody.innerHTML = "";
@@ -278,14 +301,14 @@
                 }
             }, function(error) {
                 console.error("Error fetching sold items: ", error);
-                alert("获取售出物品数据时出错。");
+                alert("Error fetching sold items data.");
             });
         }
 
-        // 获取并显示单据列表
-        function fetchBillList(store) {
+        // Listen to bill list in real-time
+        function listenBillList(store) {
             const billListRef = database.ref(`stores/${store}/bills`);
-            billListRef.once('value', function(snapshot) {
+            billListListener = billListRef.on('value', function(snapshot) {
                 if (snapshot.exists()) {
                     const bills = snapshot.val();
                     const tableBody = document.getElementById("billListTable");
@@ -314,13 +337,13 @@
                 }
             }, function(error) {
                 console.error("Error fetching bill list: ", error);
-                alert("获取单据列表时出错。");
+                alert("Error fetching bill list.");
             });
         }
 
-        // 页面加载完成后初始化
+        // Initialize the page
         window.onload = function () {
-            // 你可以在这里预加载一些数据或进行其他初始化操作
+            // You can preload data or perform other initialization tasks here if needed
         };
     </script>
 </body>
