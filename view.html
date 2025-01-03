@@ -194,10 +194,12 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // References to Firebase listeners
-        let salesSummaryListener = null;
-        let soldItemsListener = null;
-        let billListListener = null;
+        // 存储回调函数
+        let listeners = {
+            salesSummary: null,
+            soldItems: null,
+            billList: null
+        };
 
         // Fetch and display store data in real-time
         function fetchStoreData() {
@@ -231,24 +233,36 @@
 
         // Remove existing Firebase listeners
         function removeListeners() {
-            if (salesSummaryListener) {
-                salesSummaryListener.off();
-                salesSummaryListener = null;
+            const store = document.getElementById('storeSelect').value;
+            if (!store) return;
+
+            // 移除 Sales Summary 监听器
+            if (listeners.salesSummary) {
+                const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
+                salesSummaryRef.off('value', listeners.salesSummary);
+                listeners.salesSummary = null;
             }
-            if (soldItemsListener) {
-                soldItemsListener.off();
-                soldItemsListener = null;
+
+            // 移除 Sold Items 监听器
+            if (listeners.soldItems) {
+                const soldItemsRef = database.ref(`stores/${store}/soldItems`);
+                soldItemsRef.off('value', listeners.soldItems);
+                listeners.soldItems = null;
             }
-            if (billListListener) {
-                billListListener.off();
-                billListListener = null;
+
+            // 移除 Bill List 监听器
+            if (listeners.billList) {
+                const billListRef = database.ref(`stores/${store}/bills`);
+                billListRef.off('value', listeners.billList);
+                listeners.billList = null;
             }
         }
 
         // Listen to sales summary in real-time
         function listenSalesSummary(store) {
             const salesSummaryRef = database.ref(`stores/${store}/salesSummary`);
-            salesSummaryListener = salesSummaryRef.on('value', function(snapshot) {
+
+            listeners.salesSummary = function(snapshot) {
                 const summaryData = snapshot.val() || { cash: 0, card: 0, ewallet: 0 };
                 const tableBody = document.getElementById("salesSummaryTable");
 
@@ -270,7 +284,9 @@
                         <th>${(summaryData.cash + summaryData.card + summaryData.ewallet).toFixed(2)}</th>
                     </tr>
                 `;
-            }, function(error) {
+            };
+
+            salesSummaryRef.on('value', listeners.salesSummary, function(error) {
                 console.error("Error fetching sales summary: ", error);
                 alert("Error fetching sales summary.");
             });
@@ -279,7 +295,8 @@
         // Listen to sold items in real-time
         function listenSoldItems(store) {
             const soldItemsRef = database.ref(`stores/${store}/soldItems`);
-            soldItemsListener = soldItemsRef.on('value', function(snapshot) {
+
+            listeners.soldItems = function(snapshot) {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     // Convert data to array and sort
@@ -299,7 +316,9 @@
                 } else {
                     document.getElementById("soldItemsTable").innerHTML = "<tr><td colspan='3'>No data available.</td></tr>";
                 }
-            }, function(error) {
+            };
+
+            soldItemsRef.on('value', listeners.soldItems, function(error) {
                 console.error("Error fetching sold items: ", error);
                 alert("Error fetching sold items data.");
             });
@@ -308,7 +327,8 @@
         // Listen to bill list in real-time
         function listenBillList(store) {
             const billListRef = database.ref(`stores/${store}/bills`);
-            billListListener = billListRef.on('value', function(snapshot) {
+
+            listeners.billList = function(snapshot) {
                 if (snapshot.exists()) {
                     const bills = snapshot.val();
                     const tableBody = document.getElementById("billListTable");
@@ -335,15 +355,17 @@
                 } else {
                     document.getElementById("billListTable").innerHTML = "<tr><td colspan='7'>No bills found for this store.</td></tr>";
                 }
-            }, function(error) {
+            };
+
+            billListRef.on('value', listeners.billList, function(error) {
                 console.error("Error fetching bill list: ", error);
                 alert("Error fetching bill list.");
             });
         }
 
-        // Initialize the page
+        // 初始化页面时可以执行其他初始化任务
         window.onload = function () {
-            // You can preload data or perform other initialization tasks here if needed
+            // 可选：自动选择第一个店铺或进行其他初始化操作
         };
     </script>
 </body>
