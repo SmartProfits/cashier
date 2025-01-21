@@ -178,38 +178,45 @@
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 1000;
-            animation: fadeIn 0.3s ease;
         }
 
         .rolling-number {
             font-size: 72px;
-            color: #e74c3c;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+            color: #f1c40f;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            margin-bottom: 20px;
+            transition: transform 0.1s ease;
         }
 
         .drum-roll {
             font-size: 24px;
             color: #fff;
-            margin-top: 20px;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
 
         .shaking {
-            animation: shake 0.1s infinite;
+            animation: shake 0.1s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-1px, 1px) rotate(-1deg); }
+            50% { transform: translate(1px, -1px) rotate(1deg); }
+            75% { transform: translate(-1px, -1px) rotate(-1deg); }
+            100% { transform: translate(1px, 1px) rotate(1deg); }
         }
 
         .share-section {
@@ -250,6 +257,56 @@
         .copy-btn:hover {
             background: #27ae60;
         }
+
+        .admin-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .admin-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-btn:hover {
+            background: #2980b9;
+        }
+
+        .status-info div {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .name-select {
+            width: 80%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #e74c3c;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .name-select:focus {
+            border-color: #c0392b;
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+        }
+
+        .name-select option {
+            padding: 10px;
+            font-size: 16px;
+        }
     </style>
     <!-- 添加QR码生成库 -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode.js@1.0.0/qrcode.min.js"></script>
@@ -283,52 +340,100 @@
       window.dbOnValue = onValue;
       window.dbGet = get;
       window.dbChild = child;
+
+      // 添加初始化完成的标志
+      window.firebaseInitialized = true;
+      
+      // 触发初始化完成事件
+      const event = new Event('firebaseInitialized');
+      window.dispatchEvent(event);
     </script>
 </head>
 <body>
     <div class="layout">
         <div class="container">
             <div id="adminPanel">
-                <h2>🧧 红包管理设置</h2>
-                <input type="number" id="totalAmount" placeholder="设置总金额 (RM)">
-                <input type="number" id="maxParticipants" placeholder="设置抽奖人数">
-                <input type="password" id="setPassword" placeholder="设置访问密码">
-                <button onclick="setupGame()">确认设置</button>
+                <h2>🧧 Red Packet Management</h2>
+                <input type="number" id="totalAmount" placeholder="Set Total Amount (RM)">
+                <input type="number" id="maxParticipants" placeholder="Set Number of Participants">
+                <input type="text" id="setPassword" placeholder="Set Access Password">
+                <button onclick="setupGame()">Confirm Settings</button>
             </div>
 
             <div id="userPanel" class="hidden">
                 <div class="red-packet"></div>
-                <h2>🎉 红包抽奖</h2>
+                <h2>🎉 Red Packet Lucky Draw</h2>
                 <div class="status-info" id="participantStatus"></div>
-                <input type="password" id="password" placeholder="请输入密码">
-                <button onclick="checkPassword()">开始抽奖</button>
+                <input type="text" id="password" placeholder="Please Enter Password">
+                <button onclick="checkPassword()">Start Lucky Draw</button>
             </div>
 
             <div id="lotteryPanel" class="hidden">
                 <div class="red-packet"></div>
-                <h2>🎊 抽奖面板</h2>
+                <h2>🎊 Lucky Draw Panel</h2>
                 <div class="status-info" id="lotteryStatus"></div>
-                <input type="text" id="userName" placeholder="请输入您的名字">
-                <button onclick="drawLottery()">立即抽奖</button>
+                <select id="userName" class="name-select">
+                    <option value="">Please Select Your Name</option>
+                    <option value="Anna">Anna</option>
+                    <option value="Khalila">Khalila</option>
+                    <option value="BIBI">BIBI</option>
+                    <option value="Aisyah">Aisyah</option>
+                    <option value="Aisyah (M)">Aisyah (M)</option>
+                    <option value="Nuha">Nuha</option>
+                    <option value="Shafiqah">Shafiqah</option>
+                    <option value="Aina">Aina</option>
+                    <option value="Aliyyah">Aliyyah</option>
+                    <option value="Mashita">Mashita</option>
+                    <option value="Syalieza">Syalieza</option>
+                </select>
+                <button onclick="drawLottery()">Draw Now</button>
                 <div id="result" class="result"></div>
             </div>
 
             <!-- 添加分享部分 -->
             <div id="shareSection" class="share-section hidden">
-                <h3>分享链接</h3>
+                <h3>Share Link</h3>
                 <div class="share-link" id="shareLink"></div>
-                <button class="copy-btn" onclick="copyLink()">复制链接</button>
+                <button class="copy-btn" onclick="copyLink()">Copy Link</button>
                 <div id="qrcode" class="qr-code"></div>
+            </div>
+
+            <!-- 在container div中添加新的管理员查看面板 -->
+            <div id="adminViewPanel" class="hidden">
+                <h2>🎮 Admin Control Panel</h2>
+                <div class="status-info">
+                    <div>Total Amount: RM <span id="totalAmountDisplay">0</span></div>
+                    <div>Remaining Amount: RM <span id="remainingAmountDisplay">0</span></div>
+                    <div>Participants: <span id="participantCountDisplay">0</span> / <span id="maxParticipantsDisplay">0</span></div>
+                </div>
+                <div class="admin-controls">
+                    <button onclick="closeGame()" class="admin-btn">End Game</button>
+                    <button onclick="exportResults()" class="admin-btn">Export Results</button>
+                </div>
             </div>
         </div>
 
         <div class="winners-list hidden" id="winnersList">
-            <h2>🏆 中奖名单</h2>
+            <h2>🏆 Winners List</h2>
             <div id="winnersContainer"></div>
         </div>
     </div>
 
     <script>
+        // 等待 Firebase 初始化
+        window.addEventListener('firebaseInitialized', () => {
+            console.log('Firebase initialized, setting up page...');
+            // 检查 URL 中是否有游戏 ID
+            const gameId = new URLSearchParams(window.location.search).get('game');
+            if (gameId) {
+                console.log('Found game ID in URL:', gameId);
+                document.getElementById('adminPanel').classList.add('hidden');
+                document.getElementById('userPanel').classList.remove('hidden');
+                document.getElementById('winnersList').classList.remove('hidden');
+                initializeGameListeners(gameId);
+            }
+        });
+
         let gamePassword = '';
         let totalAmount = 0;
         let remainingAmount = 0;
@@ -337,10 +442,10 @@
         const MIN_AMOUNT = 10; // 设置最低金额为10
 
         function updateStatus() {
-            const remainingSpots = maxParticipants - participants.length;
+            const remainingSpots = maxParticipants - (participants ? participants.length : 0);
             const participantStatus = document.getElementById('participantStatus');
             const lotteryStatus = document.getElementById('lotteryStatus');
-            const statusText = `剩余名额: ${remainingSpots} / 总人数: ${maxParticipants}`;
+            const statusText = `Remaining Spots: ${remainingSpots} / Total: ${maxParticipants}`;
             
             if (participantStatus) {
                 participantStatus.innerHTML = statusText;
@@ -351,91 +456,77 @@
         }
 
         async function setupGame() {
-            console.log('Setup game started');
-            console.log('Amount:', document.getElementById('totalAmount').value);
-            console.log('Password:', document.getElementById('setPassword').value);
-            console.log('Participants:', document.getElementById('maxParticipants').value);
+            if (!window.db || !window.dbRef || !window.dbSet || !window.dbPush) {
+                console.error('Firebase functions not available');
+                alert('Please wait for system initialization and try again.');
+                return;
+            }
 
             try {
-                const amount = document.getElementById('totalAmount').value;
+                const amount = parseFloat(document.getElementById('totalAmount').value);
                 const password = document.getElementById('setPassword').value;
-                const participants = document.getElementById('maxParticipants').value;
-                
+                const participants = parseInt(document.getElementById('maxParticipants').value);
+
                 if (!amount || !password || !participants) {
-                    alert('请填写所有设置项！');
-                    return;
-                }
-
-                if (amount % 5 !== 0) {
-                    alert('请输入5的倍数金额！');
-                    return;
-                }
-
-                if (participants < 1) {
-                    alert('参与人数必须大于0！');
-                    return;
-                }
-
-                // 确保总金额足够每人至少分到10元
-                if (amount < participants * MIN_AMOUNT) {
-                    alert(`总金额必须至少能保证每人获得${MIN_AMOUNT}元！`);
+                    alert('Please fill in all fields!');
                     return;
                 }
 
                 // 创建新游戏
-                const gameRef = dbPush(dbRef(db, 'games'));
-                const gameId = gameRef.key;
-                console.log('Game ID created:', gameId); // 调试信息
-                
-                await dbSet(gameRef, {
-                    totalAmount: parseFloat(amount),
-                    remainingAmount: parseFloat(amount),
+                const gamesRef = window.dbRef(window.db, 'games');
+                const newGameRef = window.dbPush(gamesRef);
+                const gameId = newGameRef.key;
+
+                const gameData = {
+                    totalAmount: amount,
+                    remainingAmount: amount,
                     gamePassword: password,
-                    maxParticipants: parseInt(participants),
+                    maxParticipants: participants,
                     participants: [],
                     winners: [],
-                    createdAt: Date.now()
-                }).then(() => {
-                    console.log('Game data saved successfully'); // 调试信息
-                }).catch(error => {
-                    console.error('Error saving game data:', error); // 错误信息
-                    alert('保存游戏数据时出错：' + error.message);
-                    return;
-                });
+                    createdAt: Date.now(),
+                    isActive: true
+                };
 
-                // 将游戏ID添加到URL
+                await window.dbSet(newGameRef, gameData);
+
+                // 保存管理员密码
+                localStorage.setItem(`admin_${gameId}`, password);
+
+                // 更新 URL
                 window.history.pushState({}, '', `?game=${gameId}`);
-                
-                totalAmount = parseFloat(amount);
-                remainingAmount = totalAmount;
-                gamePassword = password;
-                maxParticipants = parseInt(participants);
-                
+
+                // 更新界面
                 document.getElementById('adminPanel').classList.add('hidden');
                 document.getElementById('userPanel').classList.remove('hidden');
                 document.getElementById('winnersList').classList.remove('hidden');
-                
-                // 显示分享部分
+                document.getElementById('adminViewPanel').classList.remove('hidden');
+
+                // 初始化其他功能
                 showShareSection();
-                
                 updateStatus();
-                alert('游戏设置成功！');
-                
-                // 开始监听游戏状态
                 initializeGameListeners(gameId);
+                updateAdminView(gameId);
+
+                alert('Game setup successful!');
 
             } catch (error) {
-                console.error('Setup game error:', error); // 错误信息
-                alert('设置游戏时出错：' + error.message);
+                console.error('Setup game error:', error);
+                alert('Error: ' + error.message);
             }
         }
 
         function initializeGameListeners(gameId) {
             try {
                 console.log('Initializing game listeners for ID:', gameId);
-                const gameRef = dbRef(db, `games/${gameId}`);
+                if (!gameId) {
+                    console.error('No game ID provided');
+                    return;
+                }
+
+                const gameRef = window.dbRef(window.db, `games/${gameId}`);
                 
-                dbOnValue(gameRef, (snapshot) => {
+                window.dbOnValue(gameRef, (snapshot) => {
                     const gameData = snapshot.val();
                     console.log('Game data received:', gameData);
                     
@@ -444,36 +535,89 @@
                         return;
                     }
 
-                    // 更新界面状态
-                    totalAmount = gameData.totalAmount;
-                    remainingAmount = gameData.remainingAmount;
-                    gamePassword = gameData.gamePassword;
-                    maxParticipants = gameData.maxParticipants;
-                    participants = gameData.participants || [];
+                    // 更新全局变量
+                    window.totalAmount = gameData.totalAmount || 0;
+                    window.remainingAmount = gameData.remainingAmount || 0;
+                    window.gamePassword = gameData.gamePassword || '';
+                    window.maxParticipants = gameData.maxParticipants || 0;
+                    window.participants = gameData.participants || [];
+
+                    // 更新状态显示
+                    const remainingSpots = gameData.maxParticipants - (gameData.participants ? gameData.participants.length : 0);
+                    const participantStatus = document.getElementById('participantStatus');
+                    const lotteryStatus = document.getElementById('lotteryStatus');
+                    const statusText = `Remaining Spots: ${remainingSpots} / Total: ${gameData.maxParticipants}`;
                     
-                    // 更新状态和中奖名单
-                    updateStatus();
+                    if (participantStatus) {
+                        participantStatus.innerHTML = statusText;
+                    }
+                    if (lotteryStatus) {
+                        lotteryStatus.innerHTML = statusText;
+                    }
+
+                    // 更新中奖名单
                     updateWinnersList(gameData.winners || []);
                     
-                    // 显示中奖名单容器
+                    // 显示中奖名单区域
                     document.getElementById('winnersList').classList.remove('hidden');
+
+                    console.log('Game state updated:', {
+                        maxParticipants: gameData.maxParticipants,
+                        currentParticipants: gameData.participants ? gameData.participants.length : 0,
+                        remainingSpots: remainingSpots
+                    });
                 }, (error) => {
                     console.error('Error listening to game data:', error);
-                    alert('监听游戏数据时出错：' + error.message);
+                    alert('Error listening to game data: ' + error.message);
                 });
             } catch (error) {
                 console.error('Initialize listeners error:', error);
-                alert('初始化游戏监听器时出错：' + error.message);
+                alert('Error initializing game listeners: ' + error.message);
             }
         }
 
-        function checkPassword() {
-            const inputPassword = document.getElementById('password').value;
-            if (inputPassword === gamePassword) {
-                document.getElementById('userPanel').classList.add('hidden');
-                document.getElementById('lotteryPanel').classList.remove('hidden');
-            } else {
-                alert('密码错误！');
+        async function checkPassword() {
+            try {
+                const gameId = new URLSearchParams(window.location.search).get('game');
+                if (!gameId) {
+                    alert('无效的游戏ID！');
+                    return;
+                }
+
+                const inputPassword = document.getElementById('password').value;
+                if (!inputPassword) {
+                    alert('请输入密码！');
+                    return;
+                }
+
+                // 获取游戏数据
+                const gameRef = window.dbRef(window.db, `games/${gameId}`);
+                const snapshot = await window.dbGet(gameRef);
+                const gameData = snapshot.val();
+
+                console.log('Game data:', gameData); // 调试信息
+
+                if (!gameData) {
+                    alert('游戏不存在！');
+                    return;
+                }
+
+                if (gameData.isActive === false) {
+                    alert('该游戏已结束！');
+                    return;
+                }
+
+                if (inputPassword === gameData.gamePassword) {
+                    document.getElementById('userPanel').classList.add('hidden');
+                    document.getElementById('lotteryPanel').classList.remove('hidden');
+                    document.getElementById('winnersList').classList.remove('hidden');
+                    updateStatus();
+                } else {
+                    alert('密码错误！');
+                }
+            } catch (error) {
+                console.error('Check password error:', error);
+                alert('验证密码时出错：' + error.message);
             }
         }
 
@@ -487,7 +631,7 @@
             animationContainer.className = 'lottery-animation';
             
             const numberDisplay = document.createElement('div');
-            numberDisplay.className = 'rolling-number shaking';
+            numberDisplay.className = 'rolling-number';
             
             const drumRoll = document.createElement('div');
             drumRoll.className = 'drum-roll';
@@ -497,29 +641,129 @@
             animationContainer.appendChild(drumRoll);
             document.body.appendChild(animationContainer);
 
-            // 播放滚动动画
-            const steps = 30; // 动画步数
-            const duration = 3000; // 总持续时间（毫秒）
-            const stepDuration = duration / steps;
+            // 修改随机数生成函数
+            const getRandomAmount = () => {
+                const amounts = [10, 15, 20, 25, 30, 35, 40, 45, 50]; // 最低从10开始
+                return amounts[Math.floor(Math.random() * amounts.length)];
+            };
+
+            // 动画参数
+            const totalDuration = 3000; // 总持续时间
+            const startTime = Date.now();
+            let lastUpdateTime = startTime;
+
+            // 动画循环
+            return new Promise(resolve => {
+                const animate = () => {
+                    const currentTime = Date.now();
+                    const elapsed = currentTime - startTime;
+                    
+                    // 根据时间推移调整更新频率和显示效果
+                    if (currentTime - lastUpdateTime > (elapsed / totalDuration) * 100) {
+                        // 生成随机数
+                        let displayAmount;
+                        
+                        if (elapsed < totalDuration * 0.7) {
+                            // 前70%时间，完全随机
+                            displayAmount = getRandomAmount();
+                        } else if (elapsed < totalDuration * 0.9) {
+                            // 70%-90%时间，在最终金额附近波动
+                            const variance = Math.max(5, Math.floor((totalDuration - elapsed) / 100));
+                            displayAmount = finalAmount + (Math.random() - 0.5) * variance * 2;
+                            displayAmount = Math.round(displayAmount / 5) * 5;
+                        } else {
+                            // 最后10%时间，逐渐稳定到最终金额
+                            displayAmount = finalAmount;
+                        }
+
+                        // 添加视觉效果
+                        const fontSize = Math.min(100, 60 + Math.random() * 40);
+                        const hue = Math.floor(Math.random() * 360);
+                        
+                        numberDisplay.style.fontSize = `${fontSize}px`;
+                        numberDisplay.style.color = `hsl(${hue}, 70%, 50%)`;
+                        numberDisplay.style.transform = `scale(${1 + Math.random() * 0.2})`;
+                        numberDisplay.textContent = `RM ${displayAmount}`;
+                        
+                        lastUpdateTime = currentTime;
+                    }
+
+                    if (elapsed < totalDuration) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        // 动画结束，显示最终金额
+                        numberDisplay.style.fontSize = '96px';
+                        numberDisplay.style.color = '#f1c40f';
+                        numberDisplay.style.transform = 'scale(1.1)';
+                        numberDisplay.textContent = `RM ${finalAmount}`;
+                        drumRoll.textContent = '恭喜！';
+                        
+                        // 等待一会后移除动画
+                        setTimeout(() => {
+                            animationContainer.style.animation = 'fadeOut 0.3s ease';
+                            setTimeout(() => {
+                                document.body.removeChild(animationContainer);
+                                resolve();
+                            }, 300);
+                        }, 1500);
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            });
+        }
+
+        function calculatePrizeAmount(remainingAmount, remainingPeople, gameData) {
+            // 预设的特定金额 (总和: 150)
+            const SPECIAL_AMOUNTS = [50, 40, 30, 20, 10];
             
-            for (let i = 0; i < steps; i++) {
-                const randomAmount = Math.floor(Math.random() * (finalAmount * 2) / 5) * 5;
-                numberDisplay.textContent = `RM ${randomAmount}`;
-                await sleep(stepDuration);
+            // 如果是最后一个人，给予剩余金额（不超过15）
+            if (remainingPeople === 0) {
+                return Math.min(Math.floor(remainingAmount), 15);
             }
 
-            // 最后显示实际金额
-            numberDisplay.classList.remove('shaking');
-            numberDisplay.style.fontSize = '96px';
-            numberDisplay.style.color = '#f1c40f';
-            numberDisplay.textContent = `RM ${finalAmount}`;
-            drumRoll.textContent = '恭喜！';
+            // 获取已经抽中的金额列表
+            const existingAmounts = (gameData.winners || []).map(w => w.amount);
+            
+            // 找出还未被抽中的特定金额
+            const remainingSpecialAmounts = SPECIAL_AMOUNTS.filter(
+                amount => !existingAmounts.includes(amount) && amount <= remainingAmount
+            );
 
-            // 等待一会后移除动画
-            await sleep(1500);
-            animationContainer.style.animation = 'fadeOut 0.3s ease';
-            await sleep(300);
-            document.body.removeChild(animationContainer);
+            // 计算已经抽取的总金额
+            const totalDrawn = existingAmounts.reduce((sum, amount) => sum + amount, 0);
+            const totalRemaining = 220 - totalDrawn;
+
+            // 如果还有特定金额未被抽中，且剩余金额足够
+            if (remainingSpecialAmounts.length > 0) {
+                // 根据剩余人数调整抽中特定金额的概率
+                const probability = remainingSpecialAmounts.length / remainingPeople;
+                
+                if (Math.random() < probability) {
+                    // 随机选择一个特定金额
+                    const randomIndex = Math.floor(Math.random() * remainingSpecialAmounts.length);
+                    const specialAmount = remainingSpecialAmounts[randomIndex];
+                    
+                    // 确保选择这个金额后，剩余的人仍能获得最低金额
+                    if (remainingAmount - specialAmount >= remainingPeople * 10) {
+                        return specialAmount;
+                    }
+                }
+            }
+
+            // 如果不抽中特定金额，则在10-15之间随机
+            const minAmount = 10; // 改为10
+            const maxAmount = 15;
+            
+            // 确保剩余金额足够分配
+            const safeMaxAmount = Math.min(
+                maxAmount,
+                Math.floor((remainingAmount - (remainingPeople * minAmount)) / remainingPeople) + minAmount
+            );
+
+            // 生成随机金额（5的倍数）
+            let randomAmount = Math.floor(Math.random() * (safeMaxAmount - minAmount + 1) + minAmount);
+            return Math.floor(randomAmount / 5) * 5;
         }
 
         async function drawLottery() {
@@ -532,13 +776,13 @@
 
                 const name = document.getElementById('userName').value;
                 if (!name) {
-                    alert('请输入您的名字！');
+                    alert('请选择您的名字！');
                     return;
                 }
 
                 // 获取最新游戏状态
-                const gameRef = dbRef(db, `games/${gameId}`);
-                const snapshot = await dbGet(gameRef);
+                const gameRef = window.dbRef(window.db, `games/${gameId}`);
+                const snapshot = await window.dbGet(gameRef);
                 const gameData = snapshot.val();
 
                 if (!gameData) {
@@ -556,9 +800,17 @@
                     return;
                 }
 
-                // 计算抽奖金额
+                // 计算剩余人数和金额
                 const remainingPeople = gameData.maxParticipants - (gameData.participants ? gameData.participants.length : 0) - 1;
-                let amount = calculatePrizeAmount(gameData.remainingAmount, remainingPeople);
+                const remainingAmount = gameData.remainingAmount;
+
+                console.log('抽奖信息：', {
+                    remainingAmount: remainingAmount,
+                    remainingPeople: remainingPeople,
+                    currentParticipants: gameData.participants ? gameData.participants.length : 0
+                });
+
+                let amount = calculatePrizeAmount(remainingAmount, remainingPeople, gameData);
 
                 // 播放动画
                 await showLotteryAnimation(amount);
@@ -572,18 +824,15 @@
                     timestamp: Date.now()
                 });
                 
-                // 更新Firebase数据
-                await dbSet(gameRef, {
+                await window.dbSet(gameRef, {
                     ...gameData,
-                    remainingAmount: gameData.remainingAmount - amount,
+                    remainingAmount: remainingAmount - amount,
                     participants: newParticipants,
                     winners: newWinners
                 });
 
-                // 立即更新显示
+                // 更新显示
                 updateWinnersList(newWinners);
-                
-                // 显示结果
                 document.getElementById('result').textContent = `恭喜获得 RM ${amount}!`;
                 
             } catch (error) {
@@ -660,39 +909,82 @@
             });
         }
 
-        function calculatePrizeAmount(remainingAmount, remainingPeople) {
-            if (remainingPeople === 0) {
-                return Math.floor(remainingAmount / 5) * 5; // 最后一个人获得所有剩余金额
-            }
-
-            // 确保每个人至少能获得最低金额
-            const minAmount = 10;
-            const maxAmount = remainingAmount - (remainingPeople * minAmount);
+        // 添加管理员视图更新函数
+        function updateAdminView(gameId) {
+            const gameRef = window.dbRef(window.db, `games/${gameId}`);
             
-            if (maxAmount <= 0) {
-                return minAmount; // 如果剩余金额不足，返回最低金额
-            }
+            window.dbOnValue(gameRef, (snapshot) => {
+                const gameData = snapshot.val();
+                if (!gameData) return;
 
-            // 生成随机金额，确保是5的倍数
-            let randomAmount = Math.floor(Math.random() * maxAmount);
-            randomAmount = Math.floor(randomAmount / 5) * 5;
-            
-            // 确保金额不小于最低金额
-            return Math.max(randomAmount, minAmount);
+                // 更新显示
+                document.getElementById('totalAmountDisplay').textContent = gameData.totalAmount;
+                document.getElementById('remainingAmountDisplay').textContent = gameData.remainingAmount;
+                document.getElementById('participantCountDisplay').textContent = 
+                    gameData.participants ? gameData.participants.length : 0;
+                document.getElementById('maxParticipantsDisplay').textContent = gameData.maxParticipants;
+            });
         }
 
-        // 页面加载时检查URL是否包含游戏ID
-        window.addEventListener('load', () => {
-            console.log('Page loaded');
+        // 添加结束游戏功能
+        async function closeGame() {
             const gameId = new URLSearchParams(window.location.search).get('game');
-            console.log('Game ID from URL:', gameId);
-            if (gameId) {
-                document.getElementById('adminPanel').classList.add('hidden');
-                document.getElementById('userPanel').classList.remove('hidden');
-                document.getElementById('winnersList').classList.remove('hidden');
-                initializeGameListeners(gameId);
+            if (!gameId) return;
+
+            const adminPassword = localStorage.getItem(`admin_${gameId}`);
+            const inputPassword = prompt('请输入管理员密码以结束游戏：');
+            
+            if (inputPassword !== adminPassword) {
+                alert('密码错误！');
+                return;
             }
-        });
+
+            try {
+                const gameRef = window.dbRef(window.db, `games/${gameId}`);
+                await window.dbSet(gameRef, {
+                    isActive: false
+                }, { merge: true });
+                alert('游戏已结束！');
+            } catch (error) {
+                console.error('Close game error:', error);
+                alert('结束游戏时出错：' + error.message);
+            }
+        }
+
+        // 添加导出结果功能
+        function exportResults() {
+            const gameId = new URLSearchParams(window.location.search).get('game');
+            if (!gameId) return;
+
+            const adminPassword = localStorage.getItem(`admin_${gameId}`);
+            const inputPassword = prompt('请输入管理员密码以导出结果：');
+            
+            if (inputPassword !== adminPassword) {
+                alert('密码错误！');
+                return;
+            }
+
+            const gameRef = window.dbRef(window.db, `games/${gameId}`);
+            window.dbGet(gameRef).then((snapshot) => {
+                const gameData = snapshot.val();
+                if (!gameData) return;
+
+                const winners = gameData.winners || [];
+                let csv = '名字,金额,时间\n';
+                
+                winners.forEach(winner => {
+                    const date = new Date(winner.timestamp).toLocaleString();
+                    csv += `${winner.name},${winner.amount},${date}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `抽奖结果_${new Date().toLocaleDateString()}.csv`;
+                a.click();
+            });
+        }
     </script>
 </body>
 </html>
