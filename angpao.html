@@ -354,8 +354,6 @@
         <div class="container">
             <div id="adminPanel">
                 <h2>🧧 Red Packet Management</h2>
-                <input type="number" id="totalAmount" placeholder="Set Total Amount (RM)">
-                <input type="number" id="maxParticipants" placeholder="Set Number of Participants">
                 <input type="text" id="setPassword" placeholder="Set Access Password">
                 <button onclick="setupGame()">Confirm Settings</button>
             </div>
@@ -442,17 +440,26 @@
         const MIN_AMOUNT = 10; // 设置最低金额为10
 
         function updateStatus() {
-            const remainingSpots = maxParticipants - (participants ? participants.length : 0);
-            const participantStatus = document.getElementById('participantStatus');
-            const lotteryStatus = document.getElementById('lotteryStatus');
-            const statusText = `Remaining Spots: ${remainingSpots} / Total: ${maxParticipants}`;
-            
-            if (participantStatus) {
-                participantStatus.innerHTML = statusText;
-            }
-            if (lotteryStatus) {
-                lotteryStatus.innerHTML = statusText;
-            }
+            const gameId = new URLSearchParams(window.location.search).get('game');
+            if (!gameId) return;
+
+            const gameRef = window.dbRef(window.db, `games/${gameId}`);
+            window.dbGet(gameRef).then(snapshot => {
+                const gameData = snapshot.val();
+                if (!gameData) return;
+
+                const remainingSpots = gameData.maxParticipants - (gameData.participants ? gameData.participants.length : 0);
+                const participantStatus = document.getElementById('participantStatus');
+                const lotteryStatus = document.getElementById('lotteryStatus');
+                const statusText = `Remaining Spots: ${remainingSpots} / Total: ${gameData.maxParticipants}`;
+                
+                if (participantStatus) {
+                    participantStatus.innerHTML = statusText;
+                }
+                if (lotteryStatus) {
+                    lotteryStatus.innerHTML = statusText;
+                }
+            });
         }
 
         async function setupGame() {
@@ -463,12 +470,10 @@
             }
 
             try {
-                const amount = parseFloat(document.getElementById('totalAmount').value);
                 const password = document.getElementById('setPassword').value;
-                const participants = parseInt(document.getElementById('maxParticipants').value);
 
-                if (!amount || !password || !participants) {
-                    alert('Please fill in all fields!');
+                if (!password) {
+                    alert('Please set a password!');
                     return;
                 }
 
@@ -478,10 +483,10 @@
                 const gameId = newGameRef.key;
 
                 const gameData = {
-                    totalAmount: amount,
-                    remainingAmount: amount,
+                    totalAmount: 220,          // 固定总金额
+                    remainingAmount: 220,      // 初始剩余金额
                     gamePassword: password,
-                    maxParticipants: participants,
+                    maxParticipants: 11,       // 固定参与人数
                     participants: [],
                     winners: [],
                     createdAt: Date.now(),
@@ -543,17 +548,7 @@
                     window.participants = gameData.participants || [];
 
                     // 更新状态显示
-                    const remainingSpots = gameData.maxParticipants - (gameData.participants ? gameData.participants.length : 0);
-                    const participantStatus = document.getElementById('participantStatus');
-                    const lotteryStatus = document.getElementById('lotteryStatus');
-                    const statusText = `Remaining Spots: ${remainingSpots} / Total: ${gameData.maxParticipants}`;
-                    
-                    if (participantStatus) {
-                        participantStatus.innerHTML = statusText;
-                    }
-                    if (lotteryStatus) {
-                        lotteryStatus.innerHTML = statusText;
-                    }
+                    updateStatus();
 
                     // 更新中奖名单
                     updateWinnersList(gameData.winners || []);
@@ -564,11 +559,8 @@
                     console.log('Game state updated:', {
                         maxParticipants: gameData.maxParticipants,
                         currentParticipants: gameData.participants ? gameData.participants.length : 0,
-                        remainingSpots: remainingSpots
+                        remainingSpots: gameData.maxParticipants - (gameData.participants ? gameData.participants.length : 0)
                     });
-                }, (error) => {
-                    console.error('Error listening to game data:', error);
-                    alert('Error listening to game data: ' + error.message);
                 });
             } catch (error) {
                 console.error('Initialize listeners error:', error);
@@ -714,56 +706,39 @@
         }
 
         function calculatePrizeAmount(remainingAmount, remainingPeople, gameData) {
-            // 预设的特定金额 (总和: 150)
-            const SPECIAL_AMOUNTS = [50, 40, 30, 20, 10];
+            // 预设的特定金额分组
+            const PRIZE_GROUPS = {
+                '50': 1,  // 1个50元奖
+                '30': 2,  // 2个30元奖
+                '20': 3,  // 3个20元奖
+                '10': 5   // 5个10元奖
+            };
             
-            // 如果是最后一个人，给予剩余金额（不超过15）
-            if (remainingPeople === 0) {
-                return Math.min(Math.floor(remainingAmount), 15);
-            }
-
             // 获取已经抽中的金额列表
             const existingAmounts = (gameData.winners || []).map(w => w.amount);
             
-            // 找出还未被抽中的特定金额
-            const remainingSpecialAmounts = SPECIAL_AMOUNTS.filter(
-                amount => !existingAmounts.includes(amount) && amount <= remainingAmount
-            );
-
-            // 计算已经抽取的总金额
-            const totalDrawn = existingAmounts.reduce((sum, amount) => sum + amount, 0);
-            const totalRemaining = 220 - totalDrawn;
-
-            // 如果还有特定金额未被抽中，且剩余金额足够
-            if (remainingSpecialAmounts.length > 0) {
-                // 根据剩余人数调整抽中特定金额的概率
-                const probability = remainingSpecialAmounts.length / remainingPeople;
-                
-                if (Math.random() < probability) {
-                    // 随机选择一个特定金额
-                    const randomIndex = Math.floor(Math.random() * remainingSpecialAmounts.length);
-                    const specialAmount = remainingSpecialAmounts[randomIndex];
-                    
-                    // 确保选择这个金额后，剩余的人仍能获得最低金额
-                    if (remainingAmount - specialAmount >= remainingPeople * 10) {
-                        return specialAmount;
-                    }
-                }
-            }
-
-            // 如果不抽中特定金额，则在10-15之间随机
-            const minAmount = 10; // 改为10
-            const maxAmount = 15;
+            // 统计每个金额已被抽取的次数
+            const amountCounts = existingAmounts.reduce((acc, amount) => {
+                acc[amount] = (acc[amount] || 0) + 1;
+                return acc;
+            }, {});
             
-            // 确保剩余金额足够分配
-            const safeMaxAmount = Math.min(
-                maxAmount,
-                Math.floor((remainingAmount - (remainingPeople * minAmount)) / remainingPeople) + minAmount
-            );
-
-            // 生成随机金额（5的倍数）
-            let randomAmount = Math.floor(Math.random() * (safeMaxAmount - minAmount + 1) + minAmount);
-            return Math.floor(randomAmount / 5) * 5;
+            // 找出还可以抽取的金额
+            const availableAmounts = Object.entries(PRIZE_GROUPS)
+                .filter(([amount, limit]) => {
+                    const currentCount = amountCounts[amount] || 0;
+                    return currentCount < limit;
+                })
+                .map(([amount]) => parseInt(amount));
+            
+            if (availableAmounts.length === 0) {
+                console.error('No available amounts left!');
+                return 0;
+            }
+            
+            // 随机选择一个可用金额
+            const randomIndex = Math.floor(Math.random() * availableAmounts.length);
+            return availableAmounts[randomIndex];
         }
 
         async function drawLottery() {
