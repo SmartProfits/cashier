@@ -360,7 +360,7 @@
 
             <div id="userPanel" class="hidden">
                 <div class="red-packet"></div>
-                <h2>🎉 Red Packet Lucky Draw</h2>
+                <h2>🎉 JKL Angpao Lucky Draw</h2>
                 <div class="status-info" id="participantStatus"></div>
                 <input type="text" id="password" placeholder="Please Enter Password">
                 <button onclick="checkPassword()">Start Lucky Draw</button>
@@ -368,7 +368,7 @@
 
             <div id="lotteryPanel" class="hidden">
                 <div class="red-packet"></div>
-                <h2>🎊 Lucky Draw Panel</h2>
+                <h2>🎊 JKL Angpao Lucky Draw</h2>
                 <div class="status-info" id="lotteryStatus"></div>
                 <select id="userName" class="name-select">
                     <option value="">Please Select Your Name</option>
@@ -394,20 +394,6 @@
                 <div class="share-link" id="shareLink"></div>
                 <button class="copy-btn" onclick="copyLink()">Copy Link</button>
                 <div id="qrcode" class="qr-code"></div>
-            </div>
-
-            <!-- 在container div中添加新的管理员查看面板 -->
-            <div id="adminViewPanel" class="hidden">
-                <h2>🎮 Admin Control Panel</h2>
-                <div class="status-info">
-                    <div>Total Amount: RM <span id="totalAmountDisplay">0</span></div>
-                    <div>Remaining Amount: RM <span id="remainingAmountDisplay">0</span></div>
-                    <div>Participants: <span id="participantCountDisplay">0</span> / <span id="maxParticipantsDisplay">0</span></div>
-                </div>
-                <div class="admin-controls">
-                    <button onclick="closeGame()" class="admin-btn">End Game</button>
-                    <button onclick="exportResults()" class="admin-btn">Export Results</button>
-                </div>
             </div>
         </div>
 
@@ -505,13 +491,11 @@
                 document.getElementById('adminPanel').classList.add('hidden');
                 document.getElementById('userPanel').classList.remove('hidden');
                 document.getElementById('winnersList').classList.remove('hidden');
-                document.getElementById('adminViewPanel').classList.remove('hidden');
 
                 // 初始化其他功能
                 showShareSection();
                 updateStatus();
                 initializeGameListeners(gameId);
-                updateAdminView(gameId);
 
                 alert('Game setup successful!');
 
@@ -881,83 +865,6 @@
                 }, 2000);
             }).catch(err => {
                 alert('复制失败，请手动复制链接');
-            });
-        }
-
-        // 添加管理员视图更新函数
-        function updateAdminView(gameId) {
-            const gameRef = window.dbRef(window.db, `games/${gameId}`);
-            
-            window.dbOnValue(gameRef, (snapshot) => {
-                const gameData = snapshot.val();
-                if (!gameData) return;
-
-                // 更新显示
-                document.getElementById('totalAmountDisplay').textContent = gameData.totalAmount;
-                document.getElementById('remainingAmountDisplay').textContent = gameData.remainingAmount;
-                document.getElementById('participantCountDisplay').textContent = 
-                    gameData.participants ? gameData.participants.length : 0;
-                document.getElementById('maxParticipantsDisplay').textContent = gameData.maxParticipants;
-            });
-        }
-
-        // 添加结束游戏功能
-        async function closeGame() {
-            const gameId = new URLSearchParams(window.location.search).get('game');
-            if (!gameId) return;
-
-            const adminPassword = localStorage.getItem(`admin_${gameId}`);
-            const inputPassword = prompt('请输入管理员密码以结束游戏：');
-            
-            if (inputPassword !== adminPassword) {
-                alert('密码错误！');
-                return;
-            }
-
-            try {
-                const gameRef = window.dbRef(window.db, `games/${gameId}`);
-                await window.dbSet(gameRef, {
-                    isActive: false
-                }, { merge: true });
-                alert('游戏已结束！');
-            } catch (error) {
-                console.error('Close game error:', error);
-                alert('结束游戏时出错：' + error.message);
-            }
-        }
-
-        // 添加导出结果功能
-        function exportResults() {
-            const gameId = new URLSearchParams(window.location.search).get('game');
-            if (!gameId) return;
-
-            const adminPassword = localStorage.getItem(`admin_${gameId}`);
-            const inputPassword = prompt('请输入管理员密码以导出结果：');
-            
-            if (inputPassword !== adminPassword) {
-                alert('密码错误！');
-                return;
-            }
-
-            const gameRef = window.dbRef(window.db, `games/${gameId}`);
-            window.dbGet(gameRef).then((snapshot) => {
-                const gameData = snapshot.val();
-                if (!gameData) return;
-
-                const winners = gameData.winners || [];
-                let csv = '名字,金额,时间\n';
-                
-                winners.forEach(winner => {
-                    const date = new Date(winner.timestamp).toLocaleString();
-                    csv += `${winner.name},${winner.amount},${date}\n`;
-                });
-
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `抽奖结果_${new Date().toLocaleDateString()}.csv`;
-                a.click();
             });
         }
     </script>
